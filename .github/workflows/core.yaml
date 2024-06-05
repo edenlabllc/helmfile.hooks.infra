@@ -1,0 +1,65 @@
+name: Core CI/CD workflow
+
+on:
+  push:
+    # For GitFlow the following patterns are suggested:
+    # - master
+    # - develop
+    # - feature/*
+    # - release/*
+    # - hotfix/*
+    #
+    # For an action with build_push_image=false the following patterns are suggested:
+    # - master
+    branches:
+      - master
+
+env:
+  # AWS region of the AWS account storing images in ECR.
+  CORE_AWS_REGION: eu-north-1
+  # the latest action version
+  ECR_BUILD_PUSH_ACTION_VERSION: v2
+
+jobs:
+  ecr-build-push:
+    name: Checkout main and ecr-build-push action repositories, run ecr-build-push action
+    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Checkout ecr-build-push action repository
+        uses: actions/checkout@v2
+        with:
+          repository: edenlabllc/fhir.ecr_build_push.action
+          ref: ${{ env.ECR_BUILD_PUSH_ACTION_VERSION }}
+          token: ${{ secrets.GH_TOKEN_REPO_FULL_ACCESS }}
+          path: .github/actions/ecr-build-push
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.CORE_AWS_REGION }}
+          aws-access-key-id: ${{ secrets.CORE_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CORE_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to AWS ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Pull ecr-build-push action image from AWS ECR
+        run: |
+          ECR_REGISTRY_URL="${{ secrets.CORE_AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.CORE_AWS_REGION }}.amazonaws.com"
+          IMAGE_NAME="core.fhir.ecr_build_push.action"
+          IMAGE_FULL_NAME="${ECR_REGISTRY_URL}/${IMAGE_NAME}:${{ env.ECR_BUILD_PUSH_ACTION_VERSION }}"
+          docker pull "${IMAGE_FULL_NAME}"
+          docker tag "${IMAGE_FULL_NAME}" "${IMAGE_NAME}"
+
+      - name: Run ecr-build-push action
+        id: ecr-build-push
+        uses: ./.github/actions/ecr-build-push
+        with:
+          build_push_image: false

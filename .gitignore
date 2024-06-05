@@ -1,0 +1,5 @@
+.DS_Store
+.idea/
+.env
+!**.gitkeep
+bin/restore-volume-snapshot/pvc-*

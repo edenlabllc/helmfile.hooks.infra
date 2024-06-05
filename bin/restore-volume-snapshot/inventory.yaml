@@ -1,0 +1,58 @@
+releases:
+  clickhouse:
+    cluster:
+      name: chi-clickhouse-cluster-0-0
+      replicas: 1
+      resourceType: statefulset
+      namespace: clickhouse
+    operator:
+      name: clickhouse-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: clickhouse
+  minio:
+    cluster:
+      name: minio
+      replicas: 4
+      resourceType: statefulset
+      namespace: minio
+  mongodb:
+    cluster:
+      name: mongodb
+      replicas: 3
+      resourceType: statefulset
+      namespace: mongodb
+  postgres:
+    cluster:
+      name: postgres-cluster
+      replicas: 2
+      resourceType: statefulset
+      namespace: postgres
+      claimSelector:
+        matchLabels:
+          cluster-name: postgres-cluster
+    operator:
+      name: postgres-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: postgres
+  elt-postgres:
+    cluster:
+      name: elt-postgres-cluster
+      replicas: 2
+      resourceType: statefulset
+      namespace: postgres
+      claimSelector:
+        matchLabels:
+          cluster-name: elt-postgres-cluster
+    operator:
+      name: postgres-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: postgres
+  zookeeper:
+    cluster:
+      name: zookeeper
+      replicas: 3
+      resourceType: statefulset
+      namespace: zookeeper
