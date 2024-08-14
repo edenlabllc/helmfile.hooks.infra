@@ -2,10 +2,18 @@
 
 set -e
 
+while [ -n "$1" ]; do
+  case "$1" in
+    --limit) shift; LIMIT="$1"; shift;;
+    --) shift; break;;
+    *) break;;
+  esac
+done
+
 NAME_SERVER="${1}"
 DOMAIN="${2}"
 
-LIMIT=120
+LIMIT="${LIMIT:-120}"
 COUNT=1
 
 while true; do

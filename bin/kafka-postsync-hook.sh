@@ -7,10 +7,18 @@ if [[ "${SKIP_KAFKA_POSTSYNC_HOOK}" == "true" ]]; then
   exit 0
 fi
 
+while [ -n "$1" ]; do
+  case "$1" in
+    --limit) shift; LIMIT="$1"; shift;;
+    --) shift; break;;
+    *) break;;
+  esac
+done
+
 RELEASE_NAME="${1:-kafka}"
 NAMESPACE="${2:-kafka}"
 
-LIMIT=180
+LIMIT="${LIMIT:-180}"
 # higher sleep is needed to wait till the operator starts updating the resources
 SLEEP=5
 

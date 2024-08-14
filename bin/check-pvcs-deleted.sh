@@ -2,11 +2,19 @@
 
 set -e
 
+while [ -n "$1" ]; do
+  case "$1" in
+    --limit) shift; LIMIT="$1"; shift;;
+    --) shift; break;;
+    *) break;;
+  esac
+done
+
 NAMESPACE="${1}"
 K8S_LABELS=("${@}")
 K8S_LABELS="${K8S_LABELS[@]:1}"
 
-LIMIT=120
+LIMIT="${LIMIT:-120}"
 PVC_IDS=( "$(kubectl -n "${NAMESPACE}" get pvc -l "${K8S_LABELS/ /,}" -o yaml | yq '.items[].spec.volumeName')" )
 
 for PVC_ID in ${PVC_IDS[*]}; do

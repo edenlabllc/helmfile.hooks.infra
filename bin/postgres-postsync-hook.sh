@@ -7,11 +7,19 @@ if [[ "${SKIP_POSTGRES_POSTSYNC_HOOK}" == "true" ]]; then
   exit 0
 fi
 
+while [ -n "$1" ]; do
+  case "$1" in
+    --limit) shift; LIMIT="$1"; shift;;
+    --) shift; break;;
+    *) break;;
+  esac
+done
+
 CLUSTER_NAME="${1:-postgres-cluster}"
 NAMESPACE="${2:-postgres}"
 CRD_NAME="${3:-postgresql}"
 
-readonly LIMIT=600
+readonly LIMIT="${LIMIT:-600}"
 COUNT=1
 
 function disable_pooler_metrics_scraping() {
