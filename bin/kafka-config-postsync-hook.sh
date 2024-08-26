@@ -2,18 +2,9 @@
 
 set -e
 
-while [ -n "$1" ]; do
-  case "$1" in
-    --limit) shift; LIMIT="$1"; shift;;
-    --) shift; break;;
-    *) break;;
-  esac
-done
-
 RELEASE_NAME="${1}"
 NAMESPACE="${2:-kafka}"
-
-LIMIT="${LIMIT:-180}"
+LIMIT="${3:-180}"
 
 # for kafkaconnector also check connector and tasks' states in .status.connectorStatus
 # for kafkamirrormaker2 also check connectors' and tasks' states in .status.connectors

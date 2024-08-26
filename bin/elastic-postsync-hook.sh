@@ -7,18 +7,10 @@ if [[ "${SKIP_ELASTIC_POSTSYNC_HOOK}" == "true" ]]; then
   exit 0
 fi
 
-while [ -n "$1" ]; do
-  case "$1" in
-    --limit) shift; LIMIT="$1"; shift;;
-    --) shift; break;;
-    *) break;;
-  esac
-done
-
 RELEASE_NAME="${1:-elastic}"
 NAMESPACE="${2:-elastic}"
+LIMIT="${3:-240}"
 
-LIMIT="${LIMIT:-240}"
 COUNT=1
 
 while true; do

@@ -2,19 +2,11 @@
 
 set -e
 
-while [ -n "$1" ]; do
-  case "$1" in
-    --limit) shift; LIMIT="$1"; shift;;
-    --) shift; break;;
-    *) break;;
-  esac
-done
-
 NAMESPACE=${1:-dagster}
 SECRET_NAME_INPUT=${2:-dagster.user.postgres-cluster.credentials.postgresql.acid.zalan.do}
 SECRET_NAME_OUTPUT=${3:-dagster-postgresql-secret}
 MASKS=(${4})
-LIMIT="${LIMIT:-180}"
+LIMIT="${5:-180}"
 
 function check_input_secret_exist() {
   COUNT=0

@@ -2,18 +2,9 @@
 
 set -e
 
-while [ -n "$1" ]; do
-  case "$1" in
-    --limit) shift; LIMIT="$1"; shift;;
-    --) shift; break;;
-    *) break;;
-  esac
-done
-
 RELEASE_NAME="${1}"
 NAMESPACE="${2:-azure}"
-
-LIMIT="${LIMIT:-1200}"
+LIMIT="${3:-1200}"
 
 GO_TEMPLATE='
   {{- range .items -}}

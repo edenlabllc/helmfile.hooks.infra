@@ -2,19 +2,11 @@
 
 set -e
 
-while [ -n "$1" ]; do
-  case "$1" in
-    --limit) shift; LIMIT="$1"; shift;;
-    --) shift; break;;
-    *) break;;
-  esac
-done
-
 RELEASE_NAME="${1:-clickhouse}"
 NAMESPACE="${2:-clickhouse}"
 ACTION="${3}"
+LIMIT="${4:-180}"
 
-LIMIT="${LIMIT:-180}"
 COUNT=1
 
 function watcher() {
