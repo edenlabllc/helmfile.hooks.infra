@@ -4,8 +4,8 @@ set -e
 
 NAME_SERVER="${1}"
 DOMAIN="${2}"
+LIMIT="${3:-120}"
 
-LIMIT=120
 COUNT=1
 
 while true; do

@@ -5,8 +5,8 @@ set -e
 RELEASE_NAME="${1:-clickhouse}"
 NAMESPACE="${2:-clickhouse}"
 ACTION="${3}"
+LIMIT="${4:-180}"
 
-LIMIT=180
 COUNT=1
 
 function watcher() {

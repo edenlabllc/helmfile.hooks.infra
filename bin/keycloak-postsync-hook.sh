@@ -6,8 +6,7 @@ RELEASE_NAME="${1}"
 NAMESPACE="${2:-keycloak}"
 STATUS_TYPE="${3:-Ready}"
 KEYCLOAK_RESOURCE="${4:-keycloak}"
-
-LIMIT=180
+LIMIT="${5:-180}"
 
 [[ "${STATUS_TYPE}" == "Done" ]] && KEYCLOAK_RESOURCE="keycloakrealmimport"
 

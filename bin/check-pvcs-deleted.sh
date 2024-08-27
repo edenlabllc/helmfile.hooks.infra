@@ -4,9 +4,15 @@ set -e
 
 NAMESPACE="${1}"
 K8S_LABELS=("${@}")
-K8S_LABELS="${K8S_LABELS[@]:1}"
+LIMIT="120"
 
-LIMIT=120
+if [[ ! "${2}" =~ ^[0-9]+$ ]];then
+    K8S_LABELS="${K8S_LABELS[@]:1}"
+else
+    LIMIT="${2}"
+    K8S_LABELS="${K8S_LABELS[@]:2}"
+fi
+
 PVC_IDS=( "$(kubectl -n "${NAMESPACE}" get pvc -l "${K8S_LABELS/ /,}" -o yaml | yq '.items[].spec.volumeName')" )
 
 for PVC_ID in ${PVC_IDS[*]}; do
