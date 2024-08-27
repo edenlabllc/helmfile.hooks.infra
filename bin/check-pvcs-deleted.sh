@@ -6,7 +6,7 @@ NAMESPACE="${1}"
 K8S_LABELS=("${@}")
 LIMIT="120"
 
-if [[ ! ${2} =~ ^[0-9]+$ ]];then
+if [[ ! "${2}" =~ ^[0-9]+$ ]];then
     K8S_LABELS="${K8S_LABELS[@]:1}"
 else
     LIMIT="${2}"
