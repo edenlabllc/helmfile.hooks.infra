@@ -9,8 +9,8 @@ fi
 
 RELEASE_NAME="${1:-elastic}"
 NAMESPACE="${2:-elastic}"
+LIMIT="${3:-240}"
 
-LIMIT=120
 COUNT=1
 
 while true; do

@@ -9,8 +9,8 @@ fi
 
 RELEASE_NAME="${1:-kafka}"
 NAMESPACE="${2:-kafka}"
+LIMIT="${3:-180}"
 
-LIMIT=180
 # higher sleep is needed to wait till the operator starts updating the resources
 SLEEP=5
 

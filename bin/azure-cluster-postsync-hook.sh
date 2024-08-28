@@ -4,8 +4,7 @@ set -e
 
 RELEASE_NAME="${1}"
 NAMESPACE="${2:-azure}"
-
-LIMIT=1200
+LIMIT="${3:-1200}"
 
 GO_TEMPLATE='
   {{- range .items -}}

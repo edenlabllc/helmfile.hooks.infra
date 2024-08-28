@@ -10,8 +10,8 @@ fi
 CLUSTER_NAME="${1:-postgres-cluster}"
 NAMESPACE="${2:-postgres}"
 CRD_NAME="${3:-postgresql}"
+LIMIT="${4:-600}"
 
-readonly LIMIT=600
 COUNT=1
 
 function disable_pooler_metrics_scraping() {
@@ -48,9 +48,12 @@ function disable_pooler_metrics_scraping() {
 }
 
 while true; do
+  sleep 1
   STATUS=$(kubectl -n "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}" -o yaml | yq '.status.PostgresClusterStatus')
-  if [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
-    sleep 1
+  if [[ "${STATUS}" == "null" ]]; then
+    echo "Resource ${CRD_NAME} cluster ${CLUSTER_NAME} not exist."
+    break
+  elif [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
     ((++COUNT))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >2& echo "Limit exceeded."
