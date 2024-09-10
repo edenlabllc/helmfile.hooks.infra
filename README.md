@@ -112,16 +112,16 @@ and can be considered as some kind of one-time "migrations".
 
 > It is recommended to investigate the scripts logic before applying to a K8S cluster.
 
-#### Upgrading to EKS 1.27
+#### Requirements
+
+* [RMK](https://github.com/edenlabllc/rmk) >= v0.44.2
+* [AWS CLI](https://aws.amazon.com/cli/) >= 2.9
+* [eksctl](https://eksctl.io/) >= v0.190.0
+* [yq](https://mikefarah.gitbook.io/yq) >= v4.35.2
+
+#### Upgrading EKS from 1.23 to 1.27
 
 The scripts support upgrading K8S from a minimal version of `1.23` to `1.27`.
-
-**Requirements:**
-
-* [RMK](https://github.com/edenlabllc/rmk) >= v0.41.0
-* [AWS CLI](https://aws.amazon.com/cli/) >= 2.9
-* [eksctl](https://eksctl.io/) >= v0.160.0
-* [yq](https://mikefarah.gitbook.io/yq) >= v4.35.2
 
 > The current upgrade covers 4 minor versions, therefore the logic is complex. For the next versions, 
 > it might have been simplified greatly, when upgrading to the closest version only, e.g. from `1.27` to `1.28`.
@@ -176,3 +176,15 @@ configs:
     inject: disabled
   # ...
 ```
+
+#### Upgrading EKS from 1.27 to 1.29
+
+The scripts support upgrading K8S from a minimal version of `1.27` to `1.29`.
+
+The list of scripts:
+- [upgrade-all.sh](bin/k8s-upgrade/1.29/upgrade-all.sh) - Initialize [RMK](https://github.com/edenlabllc/rmk) configuration, calling rest of scripts one by one (the main upgrade script).
+- [upgrade-releases.sh](bin/k8s-upgrade/1.29/upgrade-releases.sh) - Upgrade all releases. The following subscripts are executed:
+    - [upgrade-ebs-csi-snapshot-scheduler.sh](bin/k8s-upgrade/1.29/upgrade-ebs-csi-snapshot-scheduler.sh) - Upgrade [EBS CSI snapshot scheduler](https://backube.github.io/snapscheduler/) to the latest version.
+- [upgrade-cluster.sh](bin/k8s-upgrade/1.29/upgrade-cluster.sh) - Upgrade the K8S control plane and system worker node components (1 K8S version per iteration).
+- [upgrade-nodes.sh](bin/k8s-upgrade/1.29/upgrade-nodes.sh) - Rolling-update all the K8S worker nodes.
+[upgrade-ebs-csi-snapshot-scheduler.sh](bin/k8s-upgrade/1.29/upgrade-ebs-csi-snapshot-scheduler.sh)
