@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# DEPRECATED: removed in favour of secrets-sync-operator
+
 set -e
 
 NAMESPACE=${1:-dagster}
