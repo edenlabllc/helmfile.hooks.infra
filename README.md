@@ -187,4 +187,3 @@ The list of scripts:
     - [upgrade-ebs-csi-snapshot-scheduler.sh](bin/k8s-upgrade/1.29/upgrade-ebs-csi-snapshot-scheduler.sh) - Upgrade [EBS CSI snapshot scheduler](https://backube.github.io/snapscheduler/) to the latest version.
 - [upgrade-cluster.sh](bin/k8s-upgrade/1.29/upgrade-cluster.sh) - Upgrade the K8S control plane and system worker node components (1 K8S version per iteration).
 - [upgrade-nodes.sh](bin/k8s-upgrade/1.29/upgrade-nodes.sh) - Rolling-update all the K8S worker nodes.
-[upgrade-ebs-csi-snapshot-scheduler.sh](bin/k8s-upgrade/1.29/upgrade-ebs-csi-snapshot-scheduler.sh)
