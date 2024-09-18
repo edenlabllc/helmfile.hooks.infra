@@ -92,7 +92,7 @@ for ASG_TAG in ${ASG_TAGS[@]}; do
       echo "Subnet ID: ${ASG_SUBNET}"
       ASG_SUBNETS="${ASG_SUBNETS} ${ASG_SUBNET}"
     done
-    echo "ASG subnets: ${ASG_SUBNETS}"
+    echo "ASG subnets:${ASG_SUBNETS}"
 
     aws autoscaling update-auto-scaling-group --auto-scaling-group-name "${ASG_NAME}" \
       --availability-zones ${ASG_AZS} \
@@ -117,7 +117,8 @@ while true; do
     ASG_INSTANCE_REFRESH="$(aws autoscaling describe-instance-refreshes \
       --auto-scaling-group-name "${ASG_NAME}" \
       --max-records 1 \
-      --output yaml | yq '.InstanceRefreshes[0] | select(.Status != "Successful") | .AutoScalingGroupName')"
+      --output yaml | yq '.InstanceRefreshes[0] | select(.Status != "Successful" and .Status != "Cancelled") | .AutoScalingGroupName')"
+
     if [[ -n "${ASG_INSTANCE_REFRESH}" && "${ASG_INSTANCE_REFRESH}" != "null" ]]; then
       echo "ASG ${ASG_NAME} in progress..."
     else
@@ -137,11 +138,11 @@ echo
 echo "Fixing pods with a missing linkerd sidecar after the instance refresh..."
 PODS_WITH_MISSING_LINKERD_SIDECAR="$(kubectl get pods --all-namespaces -l "!linkerd.io/control-plane-ns" -o yaml | yq '.items[].metadata | select(.annotations["linkerd.io/inject"] == "enabled") | (.namespace + " " + .name)')"
 # iterate over lines ignoring spaces
-while IFS= read -r NAMESPACE_WITH_POD; do
-  if [[ -z "${NAMESPACE_WITH_POD}" ]]; then
-    # no pods found
+while IFS= read -r NAMESPACE_WITH_POD_NAME; do
+  if [[ -z "${NAMESPACE_WITH_POD_NAME}" ]]; then
+    # no corrupted pod found
     break
   fi
-  kubectl delete pod --wait=true -n ${NAMESPACE_WITH_POD}
+  kubectl delete pod --wait=true -n ${NAMESPACE_WITH_POD_NAME}
 done <<< "${PODS_WITH_MISSING_LINKERD_SIDECAR}"
 echo "Done."
