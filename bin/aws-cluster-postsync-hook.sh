@@ -3,7 +3,7 @@
 set -e
 
 RELEASE_NAME="${1}"
-NAMESPACE="${2:-azure}"
+NAMESPACE="${2:-aws}"
 LIMIT="${3:-1200}"
 
 GO_TEMPLATE='
