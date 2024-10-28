@@ -2,7 +2,7 @@
 
 set -e
 
-# Cluster-api settings
+# Cluster API settings
 export EXP_AKS=true
 export EXP_MACHINE_POOL=true
 export EXP_CLUSTER_RESOURCE_SET=false
