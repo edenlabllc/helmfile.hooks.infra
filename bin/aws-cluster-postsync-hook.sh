@@ -3,7 +3,7 @@
 set -e
 
 RELEASE_NAME="${1}"
-NAMESPACE="${2:-azure}"
+NAMESPACE="${2:-aws}"
 LIMIT="${3:-1200}"
 
 GO_TEMPLATE='
@@ -13,14 +13,14 @@ GO_TEMPLATE='
       {{- if not .status.controlPlaneReady }}0{{- end }}
       {{- if not .status.infrastructureReady }}0{{- end }}
     {{- end -}}
-    {{- if eq .kind "AzureManagedCluster" -}}
+    {{- if eq .kind "AWSManagedCluster" -}}
       {{- if not .status.ready }}0{{- end }}
     {{- end -}}
-    {{- if eq .kind "AzureManagedControlPlane" -}}
+    {{- if eq .kind "AWSManagedControlPlane" -}}
       {{- if not .status.ready }}0{{- end }}
       {{- if not .status.initialized }}0{{- end }}
     {{- end -}}
-    {{- if eq .kind "AzureManagedMachinePool" -}}
+    {{- if eq .kind "AWSManagedMachinePool" -}}
       {{- if not .status.ready }}0{{- end -}}
     {{- end -}}
     {{- if eq .kind "MachinePool" -}}
