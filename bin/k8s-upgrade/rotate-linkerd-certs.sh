@@ -3,7 +3,6 @@
 set -e
 
 function detect_linkerd() {
-  # shellcheck disable=SC2016
   KODJIN_LINKERD_STATUS="$(kubectl get deployment --namespace=fhir-server --output=yaml | \
     yq '.items[] | select(.spec.template.metadata.annotations."linkerd.io/inject" == "'"${1}"'") | .metadata | .name as $n | .namespace += "="+$n | .namespace')"
 }

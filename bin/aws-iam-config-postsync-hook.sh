@@ -20,7 +20,6 @@ COUNT=1
 K8S_API_GROUP="iam.services.k8s.aws"
 K8S_RESOURCES=("group" "instanceprofile" "openidconnectprovider" "role" "policy" "user")
 K8S_RESOURCES=("${K8S_RESOURCES[@]/%/.${K8S_API_GROUP}}") # add ".${K8S_API_GROUP}" suffix to each array item
-# shellcheck disable=SC2178
 K8S_RESOURCES="$(IFS=,; echo "${K8S_RESOURCES[*]}")" # join array by ","
 
 while true; do
