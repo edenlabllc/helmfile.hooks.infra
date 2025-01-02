@@ -3,7 +3,7 @@
 set -e
 
 RELEASE_NAME="${1}"
-NAMESPACE="${2:-gcp}"
+NAMESPACE="${2:-capg-system}"
 LIMIT="${3:-1200}"
 
 GO_TEMPLATE='

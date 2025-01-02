@@ -2,7 +2,7 @@
 
 set -e
 
-NAMESPACE="${1:-gcp}"
+NAMESPACE="${1:-capg-system}"
 REGISTRY="${2}"
 VERSION="${3}"
 
@@ -16,8 +16,8 @@ else
 fi
 
 if (kubectl --namespace "${NAMESPACE}" get deployment "${CONTROLLER_MANAGER_NAME}" &> /dev/null); then
-  CURRENT_IMAGE=$(kubectl --namespace "${NAMESPACE}" get deployment "${CONTROLLER_MANAGER_NAME}" --output yaml \
-    | yq '.spec.template.spec.containers[] | select(.name == "'"${CONTROLLER_MANAGER_CONTAINER_NAME}"'") | .image')
+  CURRENT_IMAGE="$(kubectl --namespace "${NAMESPACE}" get deployment "${CONTROLLER_MANAGER_NAME}" --output yaml \
+    | yq '.spec.template.spec.containers[] | select(.name == "'"${CONTROLLER_MANAGER_CONTAINER_NAME}"'") | .image')"
 
   if [[ "${CURRENT_IMAGE}" != "${IMAGE}" ]]; then
     kubectl --namespace "${NAMESPACE}" \
