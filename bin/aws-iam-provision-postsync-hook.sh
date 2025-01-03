@@ -10,6 +10,11 @@ GO_TEMPLATE='
   {{- range .items -}}
     {{- if not .status }}0{{- end }}
     {{- if ne .status.phase "Provisioned" }}0{{- end }}
+    {{- with .status.roles }}
+      {{- range . }}
+        {{- if ne .phase "Provisioned" }}0{{- end }}
+      {{- end }}
+    {{- end }}
   {{- end -}}
 '
 
