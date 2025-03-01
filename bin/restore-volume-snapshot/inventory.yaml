@@ -2,9 +2,12 @@ releases:
   clickhouse:
     cluster:
       name: chi-clickhouse-cluster-0-0
-      replicas: 1
+      replicas: 1 # may be different for develop/staging/production
       resourceType: statefulset
       namespace: clickhouse
+      claimSelector:
+        matchLabels:
+          clickhouse.altinity.com/chi: clickhouse
     operator:
       name: clickhouse-operator
       replicas: 1
@@ -13,9 +16,12 @@ releases:
   clickhouse-search:
     cluster:
       name: chi-clickhouse-search-cluster-0-0
-      replicas: 1
+      replicas: 1 # may be different for develop/staging/production
       resourceType: statefulset
       namespace: clickhouse
+      claimSelector:
+        matchLabels:
+          clickhouse.altinity.com/chi: clickhouse-search
     operator:
       name: clickhouse-operator
       replicas: 1
@@ -24,9 +30,12 @@ releases:
   elastic:
     cluster:
       name: elastic-es-master
-      replicas: 1
+      replicas: 1 # may be different for develop/staging/production
       resourceType: statefulset
       namespace: elastic
+      claimSelector:
+        matchLabels:
+          elasticsearch.k8s.elastic.co/cluster-name: elastic
     operator:
       name: elastic-operator
       replicas: 1
@@ -60,6 +69,17 @@ releases:
       replicas: 1
       resourceType: deployment
       namespace: postgres
+  keycloak:
+    cluster:
+      name: keycloak-cluster
+      replicas: 2
+      resourceType: statefulset
+      namespace: keycloak
+    operator:
+      name: keycloak-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: keycloak
   minio:
     cluster:
       name: minio
@@ -92,3 +112,15 @@ releases:
       replicas: 3
       resourceType: statefulset
       namespace: zookeeper
+      claimSelector:
+        matchLabels:
+          app.kubernetes.io/instance: zookeeper
+  zookeeper-search:
+    cluster:
+      name: zookeeper-search
+      replicas: 3
+      resourceType: statefulset
+      namespace: zookeeper
+      claimSelector:
+        matchLabels:
+          app.kubernetes.io/instance: zookeeper-search
