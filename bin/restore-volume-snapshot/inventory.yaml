@@ -10,6 +10,56 @@ releases:
       replicas: 1
       resourceType: deployment
       namespace: clickhouse
+  clickhouse-search:
+    cluster:
+      name: chi-clickhouse-search-cluster-0-0
+      replicas: 1
+      resourceType: statefulset
+      namespace: clickhouse
+    operator:
+      name: clickhouse-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: clickhouse
+  elastic:
+    cluster:
+      name: elastic-es-master
+      replicas: 1
+      resourceType: statefulset
+      namespace: elastic
+    operator:
+      name: elastic-operator
+      replicas: 1
+      resourceType: statefulset
+      namespace: elastic
+  elt-postgres:
+    cluster:
+      name: elt-postgres-cluster
+      replicas: 2
+      resourceType: statefulset
+      namespace: postgres
+      claimSelector:
+        matchLabels:
+          cluster-name: elt-postgres-cluster
+    operator:
+      name: postgres-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: postgres
+  fhir-postgres:
+    cluster:
+      name: fhir-postgres-cluster
+      replicas: 2
+      resourceType: statefulset
+      namespace: postgres
+      claimSelector:
+        matchLabels:
+          cluster-name: fhir-postgres-cluster
+    operator:
+      name: postgres-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: postgres
   minio:
     cluster:
       name: minio
@@ -31,20 +81,6 @@ releases:
       claimSelector:
         matchLabels:
           cluster-name: postgres-cluster
-    operator:
-      name: postgres-operator
-      replicas: 1
-      resourceType: deployment
-      namespace: postgres
-  elt-postgres:
-    cluster:
-      name: elt-postgres-cluster
-      replicas: 2
-      resourceType: statefulset
-      namespace: postgres
-      claimSelector:
-        matchLabels:
-          cluster-name: elt-postgres-cluster
     operator:
       name: postgres-operator
       replicas: 1
