@@ -69,17 +69,6 @@ releases:
       replicas: 1
       resourceType: deployment
       namespace: postgres
-  keycloak:
-    cluster:
-      name: keycloak-cluster
-      replicas: 2
-      resourceType: statefulset
-      namespace: keycloak
-    operator:
-      name: keycloak-operator
-      replicas: 1
-      resourceType: deployment
-      namespace: keycloak
   minio:
     cluster:
       name: minio
