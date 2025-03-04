@@ -2,14 +2,73 @@ releases:
   clickhouse:
     cluster:
       name: chi-clickhouse-cluster-0-0
-      replicas: 1
+      replicas: 1 # may be different for develop/staging/production
       resourceType: statefulset
       namespace: clickhouse
+      claimSelector:
+        matchLabels:
+          clickhouse.altinity.com/chi: clickhouse
     operator:
       name: clickhouse-operator
       replicas: 1
       resourceType: deployment
       namespace: clickhouse
+  clickhouse-search:
+    cluster:
+      name: chi-clickhouse-search-cluster-0-0
+      replicas: 1 # may be different for develop/staging/production
+      resourceType: statefulset
+      namespace: clickhouse
+      claimSelector:
+        matchLabels:
+          clickhouse.altinity.com/chi: clickhouse-search
+    operator:
+      name: clickhouse-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: clickhouse
+  elastic:
+    cluster:
+      name: elastic-es-master
+      replicas: 1 # may be different for develop/staging/production
+      resourceType: statefulset
+      namespace: elastic
+      claimSelector:
+        matchLabels:
+          elasticsearch.k8s.elastic.co/cluster-name: elastic
+    operator:
+      name: elastic-operator
+      replicas: 1
+      resourceType: statefulset
+      namespace: elastic
+  elt-postgres:
+    cluster:
+      name: elt-postgres-cluster
+      replicas: 2
+      resourceType: statefulset
+      namespace: postgres
+      claimSelector:
+        matchLabels:
+          cluster-name: elt-postgres-cluster
+    operator:
+      name: postgres-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: postgres
+  fhir-postgres:
+    cluster:
+      name: fhir-postgres-cluster
+      replicas: 2
+      resourceType: statefulset
+      namespace: postgres
+      claimSelector:
+        matchLabels:
+          cluster-name: fhir-postgres-cluster
+    operator:
+      name: postgres-operator
+      replicas: 1
+      resourceType: deployment
+      namespace: postgres
   minio:
     cluster:
       name: minio
@@ -36,23 +95,21 @@ releases:
       replicas: 1
       resourceType: deployment
       namespace: postgres
-  elt-postgres:
-    cluster:
-      name: elt-postgres-cluster
-      replicas: 2
-      resourceType: statefulset
-      namespace: postgres
-      claimSelector:
-        matchLabels:
-          cluster-name: elt-postgres-cluster
-    operator:
-      name: postgres-operator
-      replicas: 1
-      resourceType: deployment
-      namespace: postgres
   zookeeper:
     cluster:
       name: zookeeper
       replicas: 3
       resourceType: statefulset
       namespace: zookeeper
+      claimSelector:
+        matchLabels:
+          app.kubernetes.io/instance: zookeeper
+  zookeeper-search:
+    cluster:
+      name: zookeeper-search
+      replicas: 3
+      resourceType: statefulset
+      namespace: zookeeper
+      claimSelector:
+        matchLabels:
+          app.kubernetes.io/instance: zookeeper-search

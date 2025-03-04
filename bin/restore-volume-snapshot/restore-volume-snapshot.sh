@@ -3,8 +3,8 @@
 ### RESTORE VOLUME SNAPSHOT script ###
 # Requirements:
 #   - yq >= 4.28.*
-#   - Initialized tenant repo via rmk.
-#   - Previously installed and running snapshot scheduler for the required release.
+#   - Initialized tenant repo via RMK.
+#   - Previously installed and running ebs-csi-snapshot-scheduler for the required release.
 
 set -e
 
@@ -237,7 +237,7 @@ function downscale_release() {
     "INVENTORY_RELEASE_REPLICAS_COUNT == AVAILABLE_REPLICAS" \
     "downscale" \
     "AVAILABLE_REPLICAS > 0" \
-    "Release: ${RELEASE_NAME}, reducing the number of replicas to 0."
+    "Release: ${RELEASE_NAME}, reduced the number of replicas to 0."
 }
 
 function upscale_release() {
@@ -251,7 +251,7 @@ function upscale_release() {
   "AVAILABLE_REPLICAS == 0" \
   "upscale" \
   "AVAILABLE_REPLICAS < INVENTORY_RELEASE_REPLICAS_COUNT" \
-  "Release: ${RELEASE_NAME}, count replicas upscale according inventory file."
+  "Release: ${RELEASE_NAME}, upscaled the number of replicas according to inventory file."
 }
 
 ###
