@@ -9,7 +9,7 @@ releases:
         matchLabels:
           clickhouse.altinity.com/chi: clickhouse
     operator:
-      name: clickhouse-operator
+      name: clickhouse-operator-altinity-clickhouse-operator
       replicas: 1
       resourceType: deployment
       namespace: clickhouse
@@ -23,7 +23,7 @@ releases:
         matchLabels:
           clickhouse.altinity.com/chi: clickhouse-search
     operator:
-      name: clickhouse-operator
+      name: clickhouse-operator-altinity-clickhouse-operator
       replicas: 1
       resourceType: deployment
       namespace: clickhouse
