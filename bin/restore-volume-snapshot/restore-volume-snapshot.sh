@@ -244,7 +244,7 @@ function downscale_release_resources() {
     "Release: ${RELEASE_NAME}, reduced the number of replicas to 0."
 }
 
-function upscale_release() {
+function upscale_release_resources() {
   #  Required parameters
   #  1 - resources list
   #  2 - first check of the process start condition
@@ -252,7 +252,7 @@ function upscale_release() {
   #  4 - condition to wait for execution
   #  5 - final message
   scale_release_resources \
-     "operator cluster" \
+    "operator cluster" \
     "AVAILABLE_REPLICAS == 0" \
     "upscale" \
     "AVAILABLE_REPLICAS < INVENTORY_RELEASE_REPLICAS_COUNT" \
@@ -327,5 +327,5 @@ restore|r)
   
   kubectl apply -f "${PVC_RESTORE_FILE}"
   
-  upscale_release
+  upscale_release_resources
 esac
