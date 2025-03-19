@@ -16,13 +16,15 @@ readonly OLD_IFS="${IFS}"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly WORK_DIR="${SCRIPT_DIR}"
 
-readonly PVC_DATA_FILE="${WORK_DIR}/.pvc-data.yaml"
-readonly PVC_PREPARE_FILE="${WORK_DIR}/.pvc-prepare.yaml"
-readonly PVC_RESTORE_FILE="${WORK_DIR}/.pvc-restore.yaml"
+# permanent files
 readonly INVENTORY_FILE="${WORK_DIR}/inventory.yaml"
+# temporary files
+readonly PVC_DATA_FILE="${WORK_DIR}/.pvc-data.${RELEASE_NAME}.yaml"
+readonly PVC_PREPARE_FILE="${WORK_DIR}/.pvc-prepare.${RELEASE_NAME}.yaml"
+readonly PVC_RESTORE_FILE="${WORK_DIR}/.pvc-restore.${RELEASE_NAME}.yaml"
 
 function clear_work_dir() {
-  rm -rf "${WORK_DIR}"/.pvc-*.yaml
+  rm -f "${WORK_DIR}"/.pvc-*.yaml
 }
 
 function create_work_dir() {
@@ -283,7 +285,7 @@ COMMANDS:
 list|l)
   check_inventory
   
-  yq '.releases | keys' "${INVENTORY_FILE}"
+  yq '.releases | keys | .[]' "${INVENTORY_FILE}"
   ;;
 list-snapshots|ls)
   check_release_name
@@ -319,7 +321,7 @@ prepare|p)
   kubectl apply -f "${PVC_PREPARE_FILE}"
   ;;
 restore|r)
-  rm -rf "${PVC_RESTORE_FILE}"
+  rm -f "${PVC_RESTORE_FILE}"
 
   check_release_name
   get_current_pvc_data
