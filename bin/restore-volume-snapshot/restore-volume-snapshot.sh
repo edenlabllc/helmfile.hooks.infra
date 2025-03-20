@@ -8,18 +8,23 @@
 
 set -e
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly WORK_DIR="${SCRIPT_DIR}"
-readonly PVC_DATA_FILE="${WORK_DIR}/pvc-data.yaml"
-readonly PVC_PREPARE_FILE="${WORK_DIR}/pvc-prepare.yaml"
-readonly PVC_RESTORE_FILE="${WORK_DIR}/pvc-restore.yaml"
-readonly INVENTORY_FILE="${WORK_DIR}/inventory.yaml"
+readonly COMMAND="${1}"
 readonly RELEASE_NAME="${2}"
 readonly SNAPSHOT_DATE="${3}"
 readonly OLD_IFS="${IFS}"
 
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly WORK_DIR="${SCRIPT_DIR}"
+
+# permanent files
+readonly INVENTORY_FILE="${WORK_DIR}/inventory.yaml"
+# temporary files
+readonly PVC_DATA_FILE="${WORK_DIR}/.pvc-data.${RELEASE_NAME}.yaml"
+readonly PVC_PREPARE_FILE="${WORK_DIR}/.pvc-prepare.${RELEASE_NAME}.yaml"
+readonly PVC_RESTORE_FILE="${WORK_DIR}/.pvc-restore.${RELEASE_NAME}.yaml"
+
 function clear_work_dir() {
-  rm -rf "${WORK_DIR}"/pvc-*.yaml
+  rm -f "${WORK_DIR}"/.pvc-*.yaml
 }
 
 function create_work_dir() {
@@ -117,7 +122,7 @@ function get_inventory_release_options() {
 ###
 # Processing snapshots and PVСs for the selected release.
 ###
-function get_existing_pvc() {
+function get_existing_pvcs() {
   clear_work_dir
   eval kubectl get pvc -n "${INVENTORY_RELEASE_NAMESPACE}" -o yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '. |
   del(.items[].status,
@@ -147,7 +152,7 @@ function get_current_pvc_data() {
   readonly PVC_LENGTH="$(yq 'length' "${PVC_DATA_FILE}")"
 }
 
-function prepare_pvc() {
+function prepare_pvcs() {
   COUNT=0
   touch "${PVC_PREPARE_FILE}"
   while [ "${COUNT}" -lt "${PVC_LENGTH}" ]; do
@@ -166,7 +171,7 @@ function prepare_pvc() {
   done
 }
 
-function restore_pvc() {
+function restore_pvcs() {
   if [[ ! -f "${PVC_PREPARE_FILE}"  ]]; then
     >&2 echo "ERROR: ${PVC_PREPARE_FILE} - not created."
     return 1
@@ -176,7 +181,7 @@ function restore_pvc() {
   touch "${PVC_RESTORE_FILE}"
   while [ "${COUNT}" -lt "${PVC_LENGTH}" ]; do
     PVC_NAME="$(echo "${PVC_DATA}" | yq '.['"${COUNT}"'].metadata.name')"
-    PV_NAME="$(kubectl get pv -o yaml | yq '.items[] | select(.spec.claimRef.name == "'"${PVC_NAME}"'") | .metadata.name')"
+    PV_NAME="$(kubectl get pv -o yaml | yq '.items[] | select(.spec.claimRef.name == "'"${PVC_NAME}"'" and .status.phase == "Pending") | .metadata.name')"
     echo "Found PV: ${PV_NAME} for PVC: ${PVC_NAME}"
     if [[ -n "${PV_NAME}" ]]; then
       yq 'select(document_index == '"${COUNT}"') | .spec +=
@@ -196,7 +201,7 @@ function get_available_replicas() {
   "${INVENTORY_RELEASE_RESOURCE_NAME}" -o yaml | yq '.status.availableReplicas')"
 }
 
-function scale_replicas() {
+function scale_release_resources() {
   RESOURCES=("${1}")
   COUNT=0
   IFS="${OLD_IFS}"
@@ -226,38 +231,40 @@ function scale_replicas() {
   done
 }
 
-function downscale_release() {
+function downscale_release_resources() {
   #  Required parameters
   #  1 - resources list
   #  2 - first check of the process start condition
   #  3 - process
   #  4 - condition to wait for execution
   #  5 - final message
-  scale_replicas "operator cluster" \
+  scale_release_resources \
+    "operator cluster" \
     "INVENTORY_RELEASE_REPLICAS_COUNT == AVAILABLE_REPLICAS" \
     "downscale" \
     "AVAILABLE_REPLICAS > 0" \
     "Release: ${RELEASE_NAME}, reduced the number of replicas to 0."
 }
 
-function upscale_release() {
+function upscale_release_resources() {
   #  Required parameters
   #  1 - resources list
   #  2 - first check of the process start condition
   #  3 - process
   #  4 - condition to wait for execution
   #  5 - final message
-  scale_replicas "operator cluster" \
-  "AVAILABLE_REPLICAS == 0" \
-  "upscale" \
-  "AVAILABLE_REPLICAS < INVENTORY_RELEASE_REPLICAS_COUNT" \
-  "Release: ${RELEASE_NAME}, upscaled the number of replicas according to inventory file."
+  scale_release_resources \
+    "operator cluster" \
+    "AVAILABLE_REPLICAS == 0" \
+    "upscale" \
+    "AVAILABLE_REPLICAS < INVENTORY_RELEASE_REPLICAS_COUNT" \
+    "Release: ${RELEASE_NAME}, upscaled the number of replicas according to inventory file."
 }
 
 ###
 # Calling main commands.
 ###
-case ${1} in
+case "${COMMAND}" in
 help|h|-h|--help)
   HELP='RESTORE VOLUME SNAPSHOT script - automation of restore snapshots process for selected stateful Helm release.
 
@@ -277,7 +284,8 @@ COMMANDS:
   ;;
 list|l)
   check_inventory
-  yq '.releases | keys' "${INVENTORY_FILE}"
+  
+  yq '.releases | keys | .[]' "${INVENTORY_FILE}"
   ;;
 list-snapshots|ls)
   check_release_name
@@ -301,20 +309,25 @@ prepare|p)
   check_release_name
   check_snapshot_date
   get_inventory_release_options cluster
-  get_existing_pvc
+  get_existing_pvcs
   get_current_pvc_data
-  prepare_pvc
-  downscale_release
+  prepare_pvcs
+  downscale_release_resources
+  
   for ITEM in $(echo "${PVC_DATA}" | yq '.[].metadata.name'); do
     kubectl delete pvc "${ITEM}" -n "${INVENTORY_RELEASE_NAMESPACE}"
   done
+  
   kubectl apply -f "${PVC_PREPARE_FILE}"
   ;;
 restore|r)
-  rm -rf "${PVC_RESTORE_FILE}"
+  rm -f "${PVC_RESTORE_FILE}"
+
   check_release_name
   get_current_pvc_data
-  restore_pvc
+  restore_pvcs
+  
   kubectl apply -f "${PVC_RESTORE_FILE}"
-  upscale_release
+  
+  upscale_release_resources
 esac
