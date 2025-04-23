@@ -4,7 +4,7 @@ set -e
 
 LIMIT="${1:-120}"
 
-PVC_IDS=( "$(kubectl get -A pvc -o yaml | yq '.items[] | select(.metadata.annotations["volume.kubernetes.io/storage-provisioner"] == "ebs.csi.aws.com") | .spec.volumeName')" )
+PVC_IDS=( "$(kubectl get --all-namespaces='true' pvc --output='yaml' | yq '.items[] | select(.metadata.annotations["volume.kubernetes.io/storage-provisioner"] == "ebs.csi.aws.com") | .spec.volumeName')" )
 
 for PVC_ID in ${PVC_IDS[*]}; do
   COUNT=1
