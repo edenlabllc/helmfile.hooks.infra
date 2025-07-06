@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -e
 
 if [[ "${SKIP_POSTGRES_POSTSYNC_HOOK}" == "true" ]]; then
