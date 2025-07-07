@@ -41,4 +41,4 @@ jobs:
         uses: ./.github/actions/gitflow.ci.action
         with:
           github_token_repo_full_access: ${{ secrets.GH_TOKEN_REPO_FULL_ACCESS }}
-          build_push_image: false
+          image_build_push: false
