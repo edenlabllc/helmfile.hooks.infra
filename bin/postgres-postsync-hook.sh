@@ -11,11 +11,13 @@ CLUSTER_NAME="${1:-postgres-cluster}"
 NAMESPACE="${2:-postgres}"
 CRD_NAME="${3:-postgresql}"
 LIMIT="${4:-600}"
+PATCH_PGHOST="${5:-false}"
 
 COUNT=1
 
-function disable_pooler_metrics_scraping() {
+function prepare_pgbouncer() {
   local POOLER_NAME="${1}"
+  local SVC_NAME="${2}"
 
   echo
   if ! (kubectl -n "${NAMESPACE}" get deployment "${POOLER_NAME}" &> /dev/null); then
@@ -37,6 +39,13 @@ function disable_pooler_metrics_scraping() {
     kubectl -n "${NAMESPACE}" patch deployment "${POOLER_NAME}" --type='merge' \
       -p '{"spec": {"template": {"metadata": {"annotations": {"prometheus.io/scrape": "false"}}}}}'
     kubectl -n "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
+
+    if [[ "${PATCH_PGHOST}" == "true" ]]; then
+      echo "Patching ${POOLER_NAME} PGHOST env..."
+      kubectl -n "${NAMESPACE}" patch deployment "${POOLER_NAME}" --type='strategic' \
+        -p '{"spec":{"template":{"spec":{"containers":[{"name":"connection-pooler","env":[{"name":"PGHOST","value":"'${SVC_NAME}'.'${NAMESPACE}'.svc.cluster.local"}]}]}}}}'
+      kubectl -n "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
+    fi
 
     echo "Scaling ${POOLER_NAME} replicas back to ${POOLER_CURRENT_REPLICAS}..."
     kubectl -n "${NAMESPACE}" scale deployment "${POOLER_NAME}" --replicas="${POOLER_CURRENT_REPLICAS}"
@@ -64,5 +73,5 @@ while true; do
   fi
 done
 
-disable_pooler_metrics_scraping "${CLUSTER_NAME}-pooler"
-disable_pooler_metrics_scraping "${CLUSTER_NAME}-pooler-repl"
+prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
+prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
