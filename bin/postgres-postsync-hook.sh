@@ -15,7 +15,7 @@ PATCH_PGHOST="${5:-false}"
 
 COUNT=1
 
-function patch_deployment() {
+function prepare_pgbouncer() {
   local POOLER_NAME="${1}"
   local SVC_NAME="${2}"
 
@@ -73,5 +73,5 @@ while true; do
   fi
 done
 
-patch_deployment "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
-patch_deployment "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
+prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
+prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
