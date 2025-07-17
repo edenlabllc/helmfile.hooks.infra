@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# DEPRECATED: removed in favour of https://github.com/edenlabllc/cluster-api-provider-gcp
+
 set -e
 
 NAMESPACE="${1:-capg-system}"
