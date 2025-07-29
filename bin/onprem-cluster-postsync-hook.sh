@@ -4,7 +4,7 @@ set -e
 
 RELEASE_NAME="${1}"
 NAMESPACE="${2:-capop-system}"
-LIMIT="${3:-1200}"
+LIMIT="${3:-3600}"
 
 GO_TEMPLATE='
   {{- range .items -}}
