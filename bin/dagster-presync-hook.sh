@@ -21,7 +21,7 @@ function check_input_secret_exist() {
       sleep 1
       ((++COUNT))
     else
-      >2& echo "Limit exceeded."
+      >&2 echo "Limit exceeded."
       exit 1
     fi
   done
