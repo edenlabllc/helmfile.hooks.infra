@@ -28,7 +28,6 @@ GO_TEMPLATE='
     {{- end -}}
     {{- if eq .kind "Machine" -}}
       {{- if ne .status.phase "Running" }}0{{- end }}
-      {{- if not .status.bootstrapReady }}0{{- end }}
       {{- if not .status.infrastructureReady }}0{{- end }}
     {{- end -}}
   {{- end -}}
