@@ -19,7 +19,7 @@ for PVC_ID in ${PVC_IDS[*]}; do
   COUNT=1
   while (kubectl get pv "${PVC_ID}" &> /dev/null); do
     if (( COUNT > LIMIT )); then
-      >2& echo "Limit exceeded."
+      >&2 echo "Limit exceeded."
       exit 1
     fi
 

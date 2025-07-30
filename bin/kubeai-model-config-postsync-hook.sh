@@ -25,7 +25,7 @@ while true; do
     sleep 1
     ((++COUNT))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >2& echo "Limit exceeded."
+    >&2 echo "Limit exceeded."
     exit 1
   else
     echo
