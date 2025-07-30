@@ -65,7 +65,7 @@ while true; do
   elif [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
     ((++COUNT))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >2& echo "Limit exceeded."
+    >&2 echo "Limit exceeded."
     exit 1
   else
     kubectl -n "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}"

@@ -14,7 +14,7 @@ function check_cr() {
     sleep 1
     ((++COUNT))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >2& echo "Limit exceeded."
+    >&2 echo "Limit exceeded."
     exit 1
   else
     kubectl -n "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found
