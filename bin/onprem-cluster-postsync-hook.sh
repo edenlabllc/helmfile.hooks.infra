@@ -27,7 +27,7 @@ GO_TEMPLATE='
       {{- if not .status.ready }}0{{- end -}}
     {{- end -}}
     {{- if eq .kind "Machine" -}}
-      {{- if ne .status.phase "Running" }}0{{- end }}
+      {{- if not (or (eq .status.phase "Provisioned") (eq .status.phase "Running")) }}0{{- end }}
       {{- if not .status.infrastructureReady }}0{{- end }}
     {{- end -}}
   {{- end -}}
