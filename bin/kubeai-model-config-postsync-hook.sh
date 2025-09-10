@@ -18,19 +18,6 @@ GO_TEMPLATE='
   {{- end -}}
 '
 
-POD_SELECTOR="app=model,app.kubernetes.io/name=vllm"
-
-ANNOTATIONS_JSON='{
-  "metadata": {
-    "annotations": {
-      "prometheus.io/path": "/metrics",
-      "prometheus.io/port": "8000",
-      "prometheus.io/scheme": "http",
-      "prometheus.io/scrape": "true"
-    }
-  }
-}'
-
 COUNT=1
 while true; do
   STATUS="$(kubectl -n "${NAMESPACE}" get model -l "app.kubernetes.io/instance=${RELEASE_NAME}" -o "go-template=${GO_TEMPLATE}")"
@@ -43,17 +30,6 @@ while true; do
   else
     echo
     kubectl -n "${NAMESPACE}" get model -l "app.kubernetes.io/instance=${RELEASE_NAME}"
-
-    PODS="$(kubectl get pods -n "${NAMESPACE}" -l "${POD_SELECTOR}" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')"
-
-    echo
-    while IFS= read -r POD_NAME; do
-      if [[ -z "${POD_NAME}" ]]; then
-        break
-      fi
-      echo "Set annotations to pod: ${POD_NAME}"
-      kubectl patch pod "${POD_NAME}" -n "${NAMESPACE}" --type merge -p "${ANNOTATIONS_JSON}"
-    done <<< "${PODS}"
 
     break
   fi
