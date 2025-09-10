@@ -30,7 +30,6 @@ while true; do
   else
     echo
     kubectl -n "${NAMESPACE}" get model -l "app.kubernetes.io/instance=${RELEASE_NAME}"
-
     break
   fi
 done
