@@ -16,4 +16,16 @@ if [[ "${CURRENT_ENVIRONMENT}" != "${EXPECTED_ENVIRONMENT}" ]]; then
   exit
 fi
 
-kubectl -n "${K8S_NAMESPACE}" label --overwrite "${K8S_RESOURCE_TYPE}" "${K8S_RESOURCE_NAME}" ${K8S_LABELS}
+if [[ "${K8S_RESOURCE_TYPE}" == "pod" ]]; then
+  echo "Annotating all pods with prefix ${K8S_RESOURCE_NAME} in namespace ${K8S_NAMESPACE}"
+  PODS=$(kubectl -n "${K8S_NAMESPACE}" get pods --no-headers -o custom-columns=":metadata.name" | grep "^${K8S_RESOURCE_NAME}")
+  if [[ -z "${PODS}" ]]; then
+    echo "No pods found with prefix ${K8S_RESOURCE_NAME}"
+    exit 0
+  fi
+  for POD in "${PODS}"; do
+    kubectl -n "${K8S_NAMESPACE}" label --overwrite pod "${POD}" ${K8S_LABELS}
+  done
+else
+  kubectl -n "${K8S_NAMESPACE}" label --overwrite "${K8S_RESOURCE_TYPE}" "${K8S_RESOURCE_NAME}" ${K8S_LABELS}
+fi
