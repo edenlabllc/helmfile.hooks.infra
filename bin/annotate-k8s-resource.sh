@@ -24,8 +24,8 @@ if [[ "${K8S_RESOURCE_TYPE}" == "pod" ]]; then
     exit 0
   fi
   for POD in "${PODS}"; do
-    kubectl --namespace "${K8S_NAMESPACE}" annotate --overwrite pod "${POD}" "${K8S_ANNOTATIONS[@]}"
+    kubectl --namespace "${K8S_NAMESPACE}" annotate --overwrite pod "${POD}" ${K8S_ANNOTATIONS}
   done
 else
-  kubectl --namespace "${K8S_NAMESPACE}" annotate --overwrite "${K8S_RESOURCE_TYPE}" "${K8S_RESOURCE_NAME}" "${K8S_ANNOTATIONS[@]}"
+  kubectl --namespace "${K8S_NAMESPACE}" annotate --overwrite "${K8S_RESOURCE_TYPE}" "${K8S_RESOURCE_NAME}" ${K8S_ANNOTATIONS}
 fi
