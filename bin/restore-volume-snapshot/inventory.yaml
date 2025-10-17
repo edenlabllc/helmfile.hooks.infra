@@ -95,6 +95,12 @@ releases:
       replicas: 1
       resourceType: deployment
       namespace: postgres
+  weaviate:
+    cluster:
+      name: weaviate
+      replicas: 1
+      resourceType: statefulset
+      namespace: weaviate
   zookeeper:
     cluster:
       name: zookeeper
