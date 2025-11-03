@@ -31,7 +31,7 @@ function create_user() {
 
 set +e
 CHECK_USER=$(check_user 2> /dev/null)
-RESULT=$(echo "${CHECK_USER}" | jq '.roles[].role' -r 2> /dev/null)
+RESULT=$(echo "${CHECK_USER}" | yq '.roles[].role' -r 2> /dev/null)
 set -e
 
 MESSAGE="MongoDB user \"${MONGODB_USERNAME}\" with permissions \"${MONGODB_USER_PERMISSIONS}\" to database \"${MONGODB_DATABASE}\""

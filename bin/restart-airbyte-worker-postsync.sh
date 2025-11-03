@@ -35,7 +35,7 @@ if [[ -z "${ALLOWED_TIME_SEC}" || "${ALLOWED_TIME_SEC}" == "0" ]] ; then
 fi
 
 # GET SELECTOR OF PODS
-SELECTORS="$(kubectl get deployment -n "${NAMESPACE}" "${RELEASE_NAME}-worker" --output="json" | jq -j '.spec.selector.matchLabels | to_entries | .[] | "\(.key)=\(.value),"')"
+SELECTORS="$(kubectl get deployment -n "${NAMESPACE}" "${RELEASE_NAME}-worker" --output="json" | yq -j '.spec.selector.matchLabels | to_entries | .[] | "\(.key)=\(.value),"')"
 SELECTORS="$(echo "${SELECTORS}" | sed 's/,*$//g')" # TRIM SYMBOLS
 
 PODS_AIRBYTE_WORKERS="$(kubectl get pods -n "${NAMESPACE}" -o jsonpath="{.items[*].metadata.name}" --selector="${SELECTORS}" --field-selector="status.phase=Running")"
