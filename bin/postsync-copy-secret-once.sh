@@ -20,7 +20,7 @@ if (kubectl get secret --namespace "${SRC_NAMESPACE}" "${SRC_SECRET_NAME}" >/dev
     | yq 'del(.metadata.resourceVersion, .metadata.uid, .metadata.ownerReferences)
     | .metadata.name = env(DST_SECRET_NAME)
     | .metadata.namespace = env(DST_NAMESPACE)' \
-    | kubectl create -f -
+    | kubectl create --filename -
 
   echo "Secret ${DST_SECRET_NAME} created in ${DST_NAMESPACE} from ${SRC_SECRET_NAME} in ${SRC_NAMESPACE} (one-time copy)."
 else

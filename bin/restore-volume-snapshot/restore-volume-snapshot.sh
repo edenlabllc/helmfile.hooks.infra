@@ -49,7 +49,7 @@ function check_snapshot_date() {
 }
 
 function check_inventory() {
-  if [[ ! -f "${INVENTORY_FILE}"  ]]; then
+  if [[ ! -f "${INVENTORY_FILE}" ]]; then
     >&2 echo "ERROR: ${INVENTORY_FILE} - not exist."
     return 1
   fi
@@ -143,7 +143,7 @@ function add_separators() {
 }
 
 function get_current_pvc_data() {
-  if [[ ! -f "${PVC_DATA_FILE}"  ]]; then
+  if [[ ! -f "${PVC_DATA_FILE}" ]]; then
     >&2 echo "ERROR: ${PVC_DATA_FILE} - not created."
     return 1
   fi
@@ -172,7 +172,7 @@ function prepare_pvcs() {
 }
 
 function restore_pvcs() {
-  if [[ ! -f "${PVC_PREPARE_FILE}"  ]]; then
+  if [[ ! -f "${PVC_PREPARE_FILE}" ]]; then
     >&2 echo "ERROR: ${PVC_PREPARE_FILE} - not created."
     return 1
   fi
@@ -318,7 +318,7 @@ prepare|p)
     kubectl delete persistentvolumeclaim "${ITEM}" --namespace "${INVENTORY_RELEASE_NAMESPACE}"
   done
   
-  kubectl apply -f "${PVC_PREPARE_FILE}"
+  kubectl apply --filename "${PVC_PREPARE_FILE}"
   ;;
 restore|r)
   rm -f "${PVC_RESTORE_FILE}"
@@ -327,7 +327,7 @@ restore|r)
   get_current_pvc_data
   restore_pvcs
   
-  kubectl apply -f "${PVC_RESTORE_FILE}"
+  kubectl apply --filename "${PVC_RESTORE_FILE}"
   
   upscale_release_resources
 esac
