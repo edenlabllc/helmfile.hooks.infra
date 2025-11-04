@@ -10,13 +10,13 @@ SRC_SECRET_NAME="${2}"
 export DST_NAMESPACE="${3}"
 export DST_SECRET_NAME="${4}"
 
-if (kubectl get secret --namespace "${DST_NAMESPACE}" "${DST_SECRET_NAME}" >/dev/null 2>&1); then
+if (kubectl --namespace "${DST_NAMESPACE}" get secret "${DST_SECRET_NAME}" >/dev/null 2>&1); then
   echo "Secret ${DST_SECRET_NAME} already exists in namespace ${DST_NAMESPACE} — skipping (one-time copy)."
   exit 0
 fi
 
-if (kubectl get secret --namespace "${SRC_NAMESPACE}" "${SRC_SECRET_NAME}" >/dev/null 2>&1); then
-  kubectl get secret --namespace "${SRC_NAMESPACE}" "${SRC_SECRET_NAME}" --output yaml \
+if (kubectl --namespace "${SRC_NAMESPACE}" get secret "${SRC_SECRET_NAME}" >/dev/null 2>&1); then
+  kubectl --namespace "${SRC_NAMESPACE}" get secret "${SRC_SECRET_NAME}" --output yaml \
     | yq 'del(.metadata.resourceVersion, .metadata.uid, .metadata.ownerReferences)
     | .metadata.name = env(DST_SECRET_NAME)
     | .metadata.namespace = env(DST_NAMESPACE)' \

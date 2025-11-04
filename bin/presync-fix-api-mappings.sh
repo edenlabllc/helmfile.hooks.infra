@@ -14,5 +14,5 @@ elif [[ -z "$(helm --namespace "${NAMESPACE}" list --deployed --output yaml | yq
   echo "Release not deployed. No need to check the API mappings."
   echo "Skipped."
 else
-  echo helm "${PLUGIN_NAME}" --namespace "${NAMESPACE}" "${RELEASE_NAME}"
+  helm --namespace "${NAMESPACE}" "${PLUGIN_NAME}" "${RELEASE_NAME}"
 fi
