@@ -13,17 +13,17 @@ else
     K8S_LABELS="${K8S_LABELS[@]:2}"
 fi
 
-PVC_IDS=( "$(kubectl -n "${NAMESPACE}" get pvc -l "${K8S_LABELS/ /,}" -o yaml | yq '.items[].spec.volumeName')" )
+PVC_IDS=( "$(kubectl -n "${NAMESPACE}" get persistentvolumeclaim -l "${K8S_LABELS/ /,}" -o yaml | yq '.items[].spec.volumeName')" )
 
 for PVC_ID in ${PVC_IDS[*]}; do
   COUNT=1
-  while (kubectl get pv "${PVC_ID}" &> /dev/null); do
+  while (kubectl get persistentvolume "${PVC_ID}" &> /dev/null); do
     if (( COUNT > LIMIT )); then
       >&2 echo "Limit exceeded."
       exit 1
     fi
 
-    echo "PV name: ${PVC_ID} in the process of being removed."
+    echo "Persistent volume ${PVC_ID} in the process of being removed..."
     sleep 1
     ((++COUNT))
   done

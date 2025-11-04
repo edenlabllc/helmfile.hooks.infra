@@ -18,7 +18,7 @@ fi
 
 if [[ "${K8S_RESOURCE_TYPE}" == "pod" ]]; then
   echo "Annotating all pods with prefix ${K8S_RESOURCE_NAME} in namespace ${K8S_NAMESPACE}"
-  PODS=$(kubectl --namespace "${K8S_NAMESPACE}" get pods --output='yaml' | yq -r '.items[].metadata.name | select(test("'"^${K8S_RESOURCE_NAME}"'"))')
+  PODS=$(kubectl --namespace "${K8S_NAMESPACE}" get pod --output='yaml' | yq -r '.items[].metadata.name | select(test("'"^${K8S_RESOURCE_NAME}"'"))')
   if [[ -z "${PODS}" ]]; then
     echo "No pods found with prefix ${K8S_RESOURCE_NAME}"
     exit 0

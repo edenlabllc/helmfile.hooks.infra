@@ -13,7 +13,7 @@ PG_ENABLE_DEFAULT_USERS="${7:-false}"
 function create_default_user() {
   for DB in ${PG_DB_NAMES[*]}; do
     local DEFAULT_OWNER_USER="${DB}_owner_user"
-    if ! (kubectl get secrets -n "${NAMESPACE}" | grep "^${DEFAULT_OWNER_USER//_/-}\.${PG_CLUSTER_NAME}" &> /dev/null); then #todo remove grep
+    if ! (kubectl get secret -n "${NAMESPACE}" | grep "^${DEFAULT_OWNER_USER//_/-}\.${PG_CLUSTER_NAME}" &> /dev/null); then #todo remove grep
       kubectl patch "${PG_CRD_NAME}" "${PG_CLUSTER_NAME}" -n "${PG_NAMESPACE}" --type='merge' \
         -p '{"spec":{"databases":{"'"${DB}"'":"'"${DEFAULT_OWNER_USER}"'"}}}'
       kubectl patch "${PG_CRD_NAME}" "${PG_CLUSTER_NAME}" -n "${PG_NAMESPACE}" --type='merge' \
@@ -25,7 +25,7 @@ function create_default_user() {
 }
 
 function create_custom_user() {
-  if ! (kubectl get secrets -n "${NAMESPACE}" | grep "^${NAMESPACE}\.${PG_DB_USERNAME//_/-}\.${PG_CLUSTER_NAME}" &> /dev/null); then #todo remove grep
+  if ! (kubectl get secret -n "${NAMESPACE}" | grep "^${NAMESPACE}\.${PG_DB_USERNAME//_/-}\.${PG_CLUSTER_NAME}" &> /dev/null); then #todo remove grep
     kubectl patch "${PG_CRD_NAME}" "${PG_CLUSTER_NAME}" -n "${PG_NAMESPACE}" --type='merge' \
       -p '{"spec":{"users":{"'"${NAMESPACE}"'.'"${PG_DB_USERNAME}"'":["createdb"]}}}'
     for DB in ${PG_DB_NAMES[*]}; do

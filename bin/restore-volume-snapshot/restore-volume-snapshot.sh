@@ -124,7 +124,7 @@ function get_inventory_release_options() {
 ###
 function get_existing_pvcs() {
   clear_work_dir
-  eval kubectl get pvc -n "${INVENTORY_RELEASE_NAMESPACE}" -o yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '. |
+  eval kubectl get persistentvolumeclaim -n "${INVENTORY_RELEASE_NAMESPACE}" -o yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '. |
   del(.items[].status,
     .items[].spec.volumeMode,
     .items[].spec.volumeName,
@@ -181,7 +181,7 @@ function restore_pvcs() {
   touch "${PVC_RESTORE_FILE}"
   while [ "${COUNT}" -lt "${PVC_LENGTH}" ]; do
     PVC_NAME="$(echo "${PVC_DATA}" | yq '.['"${COUNT}"'].metadata.name')"
-    PV_NAME="$(kubectl get pv -o yaml | yq '.items[] | select(.spec.claimRef.name == "'"${PVC_NAME}"'" and .status.phase == "Pending") | .metadata.name')"
+    PV_NAME="$(kubectl get persistentvolume -o yaml | yq '.items[] | select(.spec.claimRef.name == "'"${PVC_NAME}"'" and .status.phase == "Pending") | .metadata.name')"
     echo "Found PV: ${PV_NAME} for PVC: ${PVC_NAME}"
     if [[ -n "${PV_NAME}" ]]; then
       yq 'select(document_index == '"${COUNT}"') | .spec +=
@@ -293,7 +293,7 @@ list-snapshots|ls)
 
   VOLUME_SNAPSHOT_NAME=""
   VOLUME_SNAPSHOT_COUNT=0
-  for PVC_NAME in $(eval kubectl get pvc -n "${INVENTORY_RELEASE_NAMESPACE}" -o yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '.items[].metadata.name'); do
+  for PVC_NAME in $(eval kubectl get persistentvolumeclaim -n "${INVENTORY_RELEASE_NAMESPACE}" -o yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '.items[].metadata.name'); do
     if ((VOLUME_SNAPSHOT_COUNT == 0)); then
       VOLUME_SNAPSHOT_NAME="${VOLUME_SNAPSHOT_NAME}^${PVC_NAME}-${RELEASE_NAME}-ebs-csi-snapshot-.+$"
     else
