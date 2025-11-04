@@ -103,7 +103,7 @@ function get_inventory_release_options() {
 
     LABELS_COUNT=0
     IFS=$'\n'
-    for ITEM in $(yq -r '.releases.'"${RELEASE_NAME}"'.'"${1}"'.claimSelector.matchLabels' "${INVENTORY_FILE}"); do
+    for ITEM in $(yq --unwrapScalar '.releases.'"${RELEASE_NAME}"'.'"${1}"'.claimSelector.matchLabels' "${INVENTORY_FILE}"); do
       if ((LABELS_COUNT == 0)); then
         INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS="${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}${ITEM/: /=}"
       else
@@ -277,7 +277,7 @@ COMMANDS:
     args:
       1. - release name.
       2. - snapshot date by format [202210130000] (<year><month><day><time> - without spaces).
-  restore | r - restore pvc from snapshot and run Helm release.
+  restore | r - restore PVCs from snapshot and run Helm release.
     args:
       1. - release name.'
   echo "${HELP}"
@@ -315,7 +315,7 @@ prepare|p)
   downscale_release_resources
   
   for ITEM in $(echo "${PVC_DATA}" | yq '.[].metadata.name'); do
-    kubectl delete pvc "${ITEM}" --namespace "${INVENTORY_RELEASE_NAMESPACE}"
+    kubectl delete persistentvolumeclaim "${ITEM}" --namespace "${INVENTORY_RELEASE_NAMESPACE}"
   done
   
   kubectl apply -f "${PVC_PREPARE_FILE}"
