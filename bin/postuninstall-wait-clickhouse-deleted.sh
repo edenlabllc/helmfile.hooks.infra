@@ -24,5 +24,5 @@ function check_cr() {
 
 COUNT=1
 while true; do
-  check_cr "$(kubectl -n "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found -o yaml | yq "length == 0")"
+  check_cr "$(kubectl -n "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found --output yaml | yq "length == 0")"
 done

@@ -38,25 +38,25 @@ fi
 SELECTORS="$(kubectl get deployment -n "${NAMESPACE}" "${RELEASE_NAME}-worker" --output="json" | yq -j '.spec.selector.matchLabels | to_entries | .[] | "\(.key)=\(.value),"')"
 SELECTORS="$(echo "${SELECTORS}" | sed 's/,*$//g')" # TRIM SYMBOLS #todo remove sed
 
-PODS_AIRBYTE_WORKERS="$(kubectl get pod -n "${NAMESPACE}" -o jsonpath="{.items[*].metadata.name}" --selector="${SELECTORS}" --field-selector="status.phase=Running")"
+PODS_AIRBYTE_WORKERS="$(kubectl get pod -n "${NAMESPACE}" --output jsonpath="{.items[*].metadata.name}" --selector="${SELECTORS}" --field-selector="status.phase=Running")"
 
 # HAS RUN PROCESSING ROLLOUT
 POD_CREATION_TIMESTAMP=""
 for POD_NAME in ${PODS_AIRBYTE_WORKERS}; do
-  POD_EVENTS="$(kubectl get event -n "${NAMESPACE}" --field-selector="involvedObject.kind=Pod,involvedObject.name=${POD_NAME},type=Warning,reason=Failed" --chunk-size=1 -o jsonpath="{.items[*].reason}")"
+  POD_EVENTS="$(kubectl get event -n "${NAMESPACE}" --field-selector="involvedObject.kind=Pod,involvedObject.name=${POD_NAME},type=Warning,reason=Failed" --chunk-size=1 --output jsonpath="{.items[*].reason}")"
   if [[ ! -z "${POD_EVENTS}" ]]; then
     HAS_ROLLOUT="false"
     break
   fi
 
-  CURRENT_POD_CREATION_TIMESTAMP="$(kubectl get pod -n "${NAMESPACE}" "${POD_NAME}" -o jsonpath="{.metadata.creationTimestamp}")"
+  CURRENT_POD_CREATION_TIMESTAMP="$(kubectl get pod -n "${NAMESPACE}" "${POD_NAME}" --output jsonpath="{.metadata.creationTimestamp}")"
   if [[ "${CURRENT_POD_CREATION_TIMESTAMP}" > "${POD_CREATION_TIMESTAMP}" ]]; then
     POD_CREATION_TIMESTAMP="${CURRENT_POD_CREATION_TIMESTAMP}"
   fi
 done
 
 if [[ "${HAS_ROLLOUT}" == "true" ]] && [[ ! -z "${POD_CREATION_TIMESTAMP}" ]]; then
-  SA_CREATION_TIMESTAMP="$(kubectl get serviceaccount -n "${NAMESPACE}" "${RELEASE_NAME}-admin" -o jsonpath="{.metadata.creationTimestamp}")"
+  SA_CREATION_TIMESTAMP="$(kubectl get serviceaccount -n "${NAMESPACE}" "${RELEASE_NAME}-admin" --output jsonpath="{.metadata.creationTimestamp}")"
 
   if [[ "${OS}" == "Linux" ]]; then
     POD_DATE="$(date -d "$(echo ${POD_CREATION_TIMESTAMP} | sed 's/T/ /; s/Z//')" "+%s")" #todo remove sed

@@ -16,7 +16,7 @@ if (kubectl get secret -n "${DST_NAMESPACE}" "${DST_SECRET_NAME}" >/dev/null 2>&
 fi
 
 if (kubectl get secret -n "${SRC_NAMESPACE}" "${SRC_SECRET_NAME}" >/dev/null 2>&1); then
-  kubectl get secret -n "${SRC_NAMESPACE}" "${SRC_SECRET_NAME}" -o yaml \
+  kubectl get secret -n "${SRC_NAMESPACE}" "${SRC_SECRET_NAME}" --output yaml \
     | yq 'del(.metadata.resourceVersion, .metadata.uid, .metadata.ownerReferences)
     | .metadata.name = env(DST_SECRET_NAME)
     | .metadata.namespace = env(DST_NAMESPACE)' \

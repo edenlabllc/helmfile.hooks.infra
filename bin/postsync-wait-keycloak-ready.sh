@@ -28,7 +28,7 @@ function cmd() {
 
 COUNT=1
 while true; do
-  STATUS="$(cmd -o "go-template=${GO_TEMPLATE}")"
+  STATUS="$(cmd --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     ((++COUNT))

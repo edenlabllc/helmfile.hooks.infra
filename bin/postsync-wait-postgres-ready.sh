@@ -26,7 +26,7 @@ function prepare_pgbouncer() {
     return
   fi
 
-  local POOLER_YAML="$(kubectl -n "${NAMESPACE}" get deployment "${POOLER_NAME}" -o yaml)"
+  local POOLER_YAML="$(kubectl -n "${NAMESPACE}" get deployment "${POOLER_NAME}" --output yaml)"
   local POOLER_MINIMAL_REPLICAS=1
   local POOLER_CURRENT_REPLICAS="$(echo "${POOLER_YAML}" | yq '.spec.replicas')"
 
@@ -58,7 +58,7 @@ function prepare_pgbouncer() {
 
 while true; do
   sleep 1
-  STATUS=$(kubectl -n "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}" -o yaml | yq '.status.PostgresClusterStatus')
+  STATUS=$(kubectl -n "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}" --output yaml | yq '.status.PostgresClusterStatus')
   if [[ "${STATUS}" == "null" ]]; then
     echo "Resource ${CRD_NAME} cluster ${CLUSTER_NAME} not exist."
     break

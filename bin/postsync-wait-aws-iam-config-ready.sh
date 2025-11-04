@@ -23,7 +23,7 @@ K8S_RESOURCES=("${K8S_RESOURCES[@]/%/.${K8S_API_GROUP}}") # add ".${K8S_API_GROU
 K8S_RESOURCES="$(IFS=,; echo "${K8S_RESOURCES[*]}")" # join array by ","
 
 while true; do
-  STATUS="$(kubectl -n "${NAMESPACE}" get "${K8S_RESOURCES}" -l "app.kubernetes.io/instance=${RELEASE_NAME}" -o "go-template=${GO_TEMPLATE}")"
+  STATUS="$(kubectl -n "${NAMESPACE}" get "${K8S_RESOURCES}" -l "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     ((++COUNT))
