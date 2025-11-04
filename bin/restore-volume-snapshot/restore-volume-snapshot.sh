@@ -124,7 +124,7 @@ function get_inventory_release_options() {
 ###
 function get_existing_pvcs() {
   clear_work_dir
-  eval kubectl get persistentvolumeclaim -n "${INVENTORY_RELEASE_NAMESPACE}" --output yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '. |
+  eval kubectl get persistentvolumeclaim --namespace "${INVENTORY_RELEASE_NAMESPACE}" --output yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '. |
   del(.items[].status,
     .items[].spec.volumeMode,
     .items[].spec.volumeName,
@@ -158,7 +158,7 @@ function prepare_pvcs() {
   while [ "${COUNT}" -lt "${PVC_LENGTH}" ]; do
     PVC_NAME="$(echo "${PVC_DATA}" | yq '.['"${COUNT}"'].metadata.name')"
     echo "Found PVC: ${PVC_NAME}"
-    if (kubectl get volumesnapshot "${PVC_NAME}-${RELEASE_NAME}-ebs-csi-snapshot-${SNAPSHOT_DATE}" -n "${INVENTORY_RELEASE_NAMESPACE}" 1> /dev/null); then
+    if (kubectl get volumesnapshot "${PVC_NAME}-${RELEASE_NAME}-ebs-csi-snapshot-${SNAPSHOT_DATE}" --namespace "${INVENTORY_RELEASE_NAMESPACE}" 1> /dev/null); then
       echo "${PVC_DATA}" | yq '.['"${COUNT}"'] | .spec +=
         {"dataSource":
           {"apiGroup":"snapshot.storage.k8s.io",
@@ -197,7 +197,7 @@ function restore_pvcs() {
 # Downscale or upscale resources for the selected release.
 ###
 function get_available_replicas() {
-  AVAILABLE_REPLICAS="$(kubectl get -n "${INVENTORY_RELEASE_NAMESPACE}" "${INVENTORY_RELEASE_RESOURCE_TYPE}" \
+  AVAILABLE_REPLICAS="$(kubectl get --namespace "${INVENTORY_RELEASE_NAMESPACE}" "${INVENTORY_RELEASE_RESOURCE_TYPE}" \
   "${INVENTORY_RELEASE_RESOURCE_NAME}" --output yaml | yq '.status.availableReplicas')"
 }
 
@@ -216,7 +216,7 @@ function scale_release_resources() {
       echo "Inventory ${INVENTORY_RELEASE_RESOURCE_NAME} replicas count: ${INVENTORY_RELEASE_REPLICAS_COUNT}"
       echo "Available ${INVENTORY_RELEASE_RESOURCE_NAME} replicas count: ${AVAILABLE_REPLICAS}"
       if (("${2}")); then
-        kubectl -n "${INVENTORY_RELEASE_NAMESPACE}" scale "${INVENTORY_RELEASE_RESOURCE_TYPE}" "${INVENTORY_RELEASE_RESOURCE_NAME}" --replicas="${COUNT}"
+        kubectl --namespace "${INVENTORY_RELEASE_NAMESPACE}" scale "${INVENTORY_RELEASE_RESOURCE_TYPE}" "${INVENTORY_RELEASE_RESOURCE_NAME}" --replicas="${COUNT}"
         echo -ne "Wait ${3} ${RELEASE_NAME} release for resource: ${INVENTORY_RELEASE_RESOURCE_TYPE}, name: ${INVENTORY_RELEASE_RESOURCE_NAME}"
         while (("${4}")); do
           get_available_replicas
@@ -293,7 +293,7 @@ list-snapshots|ls)
 
   VOLUME_SNAPSHOT_NAME=""
   VOLUME_SNAPSHOT_COUNT=0
-  for PVC_NAME in $(eval kubectl get persistentvolumeclaim -n "${INVENTORY_RELEASE_NAMESPACE}" --output yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '.items[].metadata.name'); do
+  for PVC_NAME in $(eval kubectl get persistentvolumeclaim --namespace "${INVENTORY_RELEASE_NAMESPACE}" --output yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '.items[].metadata.name'); do
     if ((VOLUME_SNAPSHOT_COUNT == 0)); then
       VOLUME_SNAPSHOT_NAME="${VOLUME_SNAPSHOT_NAME}^${PVC_NAME}-${RELEASE_NAME}-ebs-csi-snapshot-.+$"
     else
@@ -303,7 +303,7 @@ list-snapshots|ls)
     ((++VOLUME_SNAPSHOT_COUNT))
   done
 
-  kubectl get volumesnapshot -n "${INVENTORY_RELEASE_NAMESPACE}" --output yaml | yq '.items[].metadata.name | select(test("'"${VOLUME_SNAPSHOT_NAME}"'"))'
+  kubectl get volumesnapshot --namespace "${INVENTORY_RELEASE_NAMESPACE}" --output yaml | yq '.items[].metadata.name | select(test("'"${VOLUME_SNAPSHOT_NAME}"'"))'
   ;;
 prepare|p)
   check_release_name
@@ -315,7 +315,7 @@ prepare|p)
   downscale_release_resources
   
   for ITEM in $(echo "${PVC_DATA}" | yq '.[].metadata.name'); do
-    kubectl delete pvc "${ITEM}" -n "${INVENTORY_RELEASE_NAMESPACE}"
+    kubectl delete pvc "${ITEM}" --namespace "${INVENTORY_RELEASE_NAMESPACE}"
   done
   
   kubectl apply -f "${PVC_PREPARE_FILE}"

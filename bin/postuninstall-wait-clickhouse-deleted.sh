@@ -16,7 +16,7 @@ function check_cr() {
     >&2 echo "Limit exceeded."
     exit 1
   else
-    kubectl -n "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found
+    kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found
 
     exit 0
   fi
@@ -24,5 +24,5 @@ function check_cr() {
 
 COUNT=1
 while true; do
-  check_cr "$(kubectl -n "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found --output yaml | yq "length == 0")"
+  check_cr "$(kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found --output yaml | yq "length == 0")"
 done

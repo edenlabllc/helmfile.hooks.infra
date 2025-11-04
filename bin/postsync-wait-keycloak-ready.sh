@@ -23,7 +23,7 @@ GO_TEMPLATE='
 '
 
 function cmd() {
-  kubectl -n "${NAMESPACE}" get "${KEYCLOAK_RESOURCE}" -l "app.kubernetes.io/instance=${RELEASE_NAME}" "${@}"
+  kubectl --namespace "${NAMESPACE}" get "${KEYCLOAK_RESOURCE}" -l "app.kubernetes.io/instance=${RELEASE_NAME}" "${@}"
 }
 
 COUNT=1

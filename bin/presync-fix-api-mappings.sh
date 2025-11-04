@@ -10,7 +10,7 @@ PLUGIN_NAME="mapkubeapis"
 if ! helm plugin list | grep -q "${PLUGIN_NAME}"; then
   echo "Helm plugin ${PLUGIN_NAME} not installed."
   echo "Skipped."
-elif [[ -z "$(helm -n "${NAMESPACE}" list --deployed --output yaml | yq -r '.[] | select(.name == "'"${RELEASE_NAME}"'") | .name')" ]]; then
+elif [[ -z "$(helm --namespace "${NAMESPACE}" list --deployed --output yaml | yq -r '.[] | select(.name == "'"${RELEASE_NAME}"'") | .name')" ]]; then
   echo "Release not deployed. No need to check the API mappings."
   echo "Skipped."
 else

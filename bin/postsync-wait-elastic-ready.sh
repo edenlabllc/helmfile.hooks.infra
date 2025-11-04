@@ -14,7 +14,7 @@ LIMIT="${3:-240}"
 COUNT=1
 
 while true; do
-  STATUS=$(kubectl -n "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}" --output yaml | yq '.status.phase')
+  STATUS=$(kubectl --namespace "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}" --output yaml | yq '.status.phase')
   if [[ "${STATUS}" != "Ready" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     ((++COUNT))
@@ -22,7 +22,7 @@ while true; do
     >&2 echo "Limit exceeded."
     exit 1
   else
-    kubectl -n "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}"
+    kubectl --namespace "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}"
     break
   fi
 done

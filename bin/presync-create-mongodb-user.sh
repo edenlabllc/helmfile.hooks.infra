@@ -13,7 +13,7 @@ MONGODB_DATABASE=${5}
 MONGODB_USER_PERMISSIONS=readWrite
 
 function mongodb_exec() {
-  kubectl -n "${MONGODB_NAMESPACE}" exec --stdin "${MONGODB_RELEASE_NAME}-0" --container "${MONGODB_CONTAINER_NAME}" -- bash -c "${1}"
+  kubectl --namespace "${MONGODB_NAMESPACE}" exec --stdin "${MONGODB_RELEASE_NAME}-0" --container "${MONGODB_CONTAINER_NAME}" -- bash -c "${1}"
 }
 
 function check_user() {
