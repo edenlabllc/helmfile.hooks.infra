@@ -13,7 +13,7 @@ else
     K8S_LABELS="${K8S_LABELS[@]:2}"
 fi
 
-PVC_IDS=( "$(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim -l "${K8S_LABELS/ /,}" --output yaml | yq '.items[].spec.volumeName')" )
+PVC_IDS=( "$(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${K8S_LABELS/ /,}" --output yaml | yq '.items[].spec.volumeName')" )
 
 for PVC_ID in ${PVC_IDS[*]}; do
   COUNT=1

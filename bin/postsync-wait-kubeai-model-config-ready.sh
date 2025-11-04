@@ -20,7 +20,7 @@ GO_TEMPLATE='
 
 COUNT=1
 while true; do
-  STATUS="$(kubectl --namespace "${NAMESPACE}" get model -l "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get model --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     ((++COUNT))
@@ -29,7 +29,7 @@ while true; do
     exit 1
   else
     echo
-    kubectl --namespace "${NAMESPACE}" get model -l "app.kubernetes.io/instance=${RELEASE_NAME}"
+    kubectl --namespace "${NAMESPACE}" get model --selector "app.kubernetes.io/instance=${RELEASE_NAME}"
     break
   fi
 done

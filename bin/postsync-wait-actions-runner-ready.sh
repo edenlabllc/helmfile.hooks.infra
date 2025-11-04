@@ -16,7 +16,7 @@ GO_TEMPLATE='
 
 COUNT=1
 while true; do
-  STATUS="$(kubectl --namespace "${NAMESPACE}" get runnerdeployment,runnerset -l "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get runnerdeployment,runnerset --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     ((++COUNT))
@@ -24,7 +24,7 @@ while true; do
     >&2 echo "Limit exceeded."
     exit 1
   else
-    kubectl --namespace "${NAMESPACE}" get runnerdeployment,runnerset -l "app.kubernetes.io/instance=${RELEASE_NAME}"
+    kubectl --namespace "${NAMESPACE}" get runnerdeployment,runnerset --selector "app.kubernetes.io/instance=${RELEASE_NAME}"
     break
   fi
 done
