@@ -11,7 +11,7 @@ while [[ "$(kubectl get pv --output='yaml' | yq '[.items[] | select(.metadata.an
     exit 1
   fi
 
-  echo "PV resources in the process of being removed."
+  echo "EBS volumes in the process of being removed..."
   sleep 1
   ((++COUNT))
 done

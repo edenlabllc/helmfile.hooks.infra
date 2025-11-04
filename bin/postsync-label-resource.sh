@@ -18,12 +18,13 @@ fi
 
 if [[ "${K8S_RESOURCE_TYPE}" == "pod" ]]; then
   echo "Annotating all pods with prefix ${K8S_RESOURCE_NAME} in namespace ${K8S_NAMESPACE}"
-  PODS=$(kubectl --namespace "${K8S_NAMESPACE}" get pods --no-headers --output custom-columns=":metadata.name" | grep "^${K8S_RESOURCE_NAME}")
+  # todo remove grep
+  PODS=$(kubectl --namespace "${K8S_NAMESPACE}" get pod --no-headers --output custom-columns=":metadata.name" | grep "^${K8S_RESOURCE_NAME}")
   if [[ -z "${PODS}" ]]; then
     echo "No pods found with prefix ${K8S_RESOURCE_NAME}"
     exit 0
   fi
-  for POD in "${PODS}"; do
+  for POD in ${PODS}; do
     kubectl --namespace "${K8S_NAMESPACE}" label --overwrite pod "${POD}" ${K8S_LABELS}
   done
 else

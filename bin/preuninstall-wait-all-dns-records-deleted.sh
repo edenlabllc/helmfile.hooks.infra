@@ -4,5 +4,5 @@ set -e
 
 LIMIT="${1:-30}"
 
-echo "Waiting for ${LIMIT} seconds."
+echo "Waiting for ${LIMIT} seconds..."
 sleep "${LIMIT}"

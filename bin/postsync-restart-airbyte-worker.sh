@@ -36,7 +36,7 @@ fi
 
 # GET SELECTOR OF PODS
 SELECTORS="$(kubectl get deployment -n "${NAMESPACE}" "${RELEASE_NAME}-worker" --output="json" | yq -j '.spec.selector.matchLabels | to_entries | .[] | "\(.key)=\(.value),"')"
-SELECTORS="$(echo "${SELECTORS}" | sed 's/,*$//g')" # TRIM SYMBOLS
+SELECTORS="$(echo "${SELECTORS}" | sed 's/,*$//g')" # TRIM SYMBOLS #todo remove sed
 
 PODS_AIRBYTE_WORKERS="$(kubectl get pods -n "${NAMESPACE}" -o jsonpath="{.items[*].metadata.name}" --selector="${SELECTORS}" --field-selector="status.phase=Running")"
 
@@ -59,8 +59,8 @@ if [[ "${HAS_ROLLOUT}" == "true" ]] && [[ ! -z "${POD_CREATION_TIMESTAMP}" ]]; t
   SA_CREATION_TIMESTAMP="$(kubectl get sa -n "${NAMESPACE}" "${RELEASE_NAME}-admin" -o jsonpath="{.metadata.creationTimestamp}")"
 
   if [[ "${OS}" == "Linux" ]]; then
-    POD_DATE="$(date -d "$(echo ${POD_CREATION_TIMESTAMP} | sed 's/T/ /; s/Z//')" "+%s")"
-    SA_DATE="$(date -d "$(echo ${SA_CREATION_TIMESTAMP} | sed 's/T/ /; s/Z//')" "+%s")"
+    POD_DATE="$(date -d "$(echo ${POD_CREATION_TIMESTAMP} | sed 's/T/ /; s/Z//')" "+%s")" #todo remove sed
+    SA_DATE="$(date -d "$(echo ${SA_CREATION_TIMESTAMP} | sed 's/T/ /; s/Z//')" "+%s")" #todo remove sed
   elif [[ "${OS}" == "Mac" ]]; then
     POD_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${POD_CREATION_TIMESTAMP}" "+%s")"
     SA_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${SA_CREATION_TIMESTAMP}" "+%s")"

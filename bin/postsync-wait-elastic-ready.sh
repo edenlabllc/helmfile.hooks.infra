@@ -22,7 +22,7 @@ while true; do
     >&2 echo "Limit exceeded."
     exit 1
   else
-    kubectl -n "${NAMESPACE}" get elastic | grep "${RELEASE_NAME}"
+    kubectl -n "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}"
     break
   fi
 done
