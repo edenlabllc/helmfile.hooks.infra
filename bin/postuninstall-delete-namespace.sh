@@ -4,4 +4,4 @@ set -e
 
 NAMESPACE="${1}"
 
-kubectl delete namespaces "${NAMESPACE}"
+kubectl delete namespace "${NAMESPACE}"

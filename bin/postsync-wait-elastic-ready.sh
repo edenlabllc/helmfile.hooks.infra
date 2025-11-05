@@ -14,7 +14,7 @@ LIMIT="${3:-240}"
 COUNT=1
 
 while true; do
-  STATUS=$(kubectl --namespace "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}" --output yaml | yq '.status.phase')
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}" --output yaml | yq '.status.phase')"
   if [[ "${STATUS}" != "Ready" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     ((++COUNT))

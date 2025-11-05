@@ -58,7 +58,7 @@ function prepare_pgbouncer() {
 
 while true; do
   sleep 1
-  STATUS=$(kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}" --output yaml | yq '.status.PostgresClusterStatus')
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}" --output yaml | yq '.status.PostgresClusterStatus')"
   if [[ "${STATUS}" == "null" ]]; then
     echo "Resource ${CRD_NAME} cluster ${CLUSTER_NAME} not exist."
     break

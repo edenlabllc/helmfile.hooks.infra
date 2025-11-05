@@ -16,8 +16,8 @@ function check_cr() {
     >&2 echo "Limit exceeded."
     exit 1
   else
+    echo
     kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found
-
     exit 0
   fi
 }

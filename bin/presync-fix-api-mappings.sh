@@ -7,7 +7,7 @@ RELEASE_NAME="${2}"
 
 PLUGIN_NAME="mapkubeapis"
 
-if ! helm plugin list | grep -q "${PLUGIN_NAME}"; then
+if ! (helm plugin list | grep -q "${PLUGIN_NAME}"); then
   echo "Helm plugin ${PLUGIN_NAME} not installed."
   echo "Skipped."
 elif [[ -z "$(helm --namespace "${NAMESPACE}" list --deployed --output yaml | yq --unwrapScalar '.[] | select(.name == "'"${RELEASE_NAME}"'") | .name')" ]]; then
