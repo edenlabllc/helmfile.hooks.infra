@@ -18,7 +18,7 @@ function get_os() {
   case "${UNAME_OUT}" in
       Linux*)     MACHINE="Linux";;
       Darwin*)    MACHINE="Mac";;
-      *)          MACHINE="UNKNOWN:${UNAME_OUT}"
+      *)          MACHINE="UNKNOWN: ${UNAME_OUT}"
   esac
   echo "${MACHINE}"
 }
@@ -26,55 +26,79 @@ function get_os() {
 OS="$(get_os)"
 NAMESPACE="${1:-airbyte}"
 RELEASE_NAME="${2:-airbyte}"
-# default: 1min
-ALLOWED_TIME_SEC="${3:-60}"
-HAS_ROLLOUT="true"
+ALLOWED_TIME_SECONDS="${3:-60}"
 
-if [[ -z "${ALLOWED_TIME_SEC}" || "${ALLOWED_TIME_SEC}" == "0" ]] ; then
-  echo "ALLOWED_TIME_SEC must be more than 0";
+if [[ -z "${ALLOWED_TIME_SECONDS}" || "${ALLOWED_TIME_SECONDS}" == "0" ]] ; then
+  >&2 echo "ALLOWED_TIME_SEC must be more than 0"
+  exit 1
 fi
 
-# GET SELECTOR OF PODS
-SELECTORS="$(kubectl --namespace "${NAMESPACE}" get deployment "${RELEASE_NAME}-worker" --output="json" | yq -j '.spec.selector.matchLabels | to_entries | .[] | "\(.key)=\(.value),"')"
-SELECTORS="$(echo "${SELECTORS}" | sed 's/,*$//g')" # TRIM SYMBOLS #todo remove sed
+POD_SELECTORS="$(kubectl --namespace "${NAMESPACE}" get deployment "${RELEASE_NAME}-worker" --output yaml \
+  | yq --unwrapScalar '.spec.selector.matchLabels | to_entries | map("\(.key)=\(.value)") | join(",")')"
 
-PODS_AIRBYTE_WORKERS="$(kubectl --namespace "${NAMESPACE}" get pod --output jsonpath="{.items[*].metadata.name}" --selector="${SELECTORS}" --field-selector="status.phase=Running")"
+PODS_AIRBYTE_WORKERS="$(kubectl --namespace "${NAMESPACE}" get pod --selector="${POD_SELECTORS}" --output yaml \
+  | yq --unwrapScalar '.items[] | select(.status.phase == "Running") | .metadata.name')"
 
-# HAS RUN PROCESSING ROLLOUT
-POD_CREATION_TIMESTAMP=""
+# track if rollout was performed (i.e., if any worker pod crashed)
+HAS_ROLLOUT="true"
+
+# load all events once to avoid repeated kubectl calls
+EVENTS_YAML="$(kubectl --namespace "${NAMESPACE}" get event --output yaml)"
+
 for POD_NAME in ${PODS_AIRBYTE_WORKERS}; do
-  POD_EVENTS="$(kubectl --namespace "${NAMESPACE}" get event --field-selector="involvedObject.kind=Pod,involvedObject.name=${POD_NAME},type=Warning,reason=Failed" --chunk-size=1 --output jsonpath="{.items[*].reason}")"
-  if [[ ! -z "${POD_EVENTS}" ]]; then
+  POD_EVENTS="$(echo "${EVENTS_YAML}" \
+    | yq --unwrapScalar '
+        .items[]
+        | select(.involvedObject.kind == "Pod")
+        | select(.involvedObject.name == "'"${POD_NAME}"'")
+        | select(.type == "Warning")
+        | select(.reason == "Failed")
+        | .reason
+      ')"
+
+  # if any worker pod contains Failed events — rollout was NOT performed
+  if [[ -n "${POD_EVENTS}" ]]; then
     HAS_ROLLOUT="false"
     break
   fi
-
-  CURRENT_POD_CREATION_TIMESTAMP="$(kubectl --namespace "${NAMESPACE}" get pod "${POD_NAME}" --output jsonpath="{.metadata.creationTimestamp}")"
-  if [[ "${CURRENT_POD_CREATION_TIMESTAMP}" > "${POD_CREATION_TIMESTAMP}" ]]; then
-    POD_CREATION_TIMESTAMP="${CURRENT_POD_CREATION_TIMESTAMP}"
-  fi
 done
 
-if [[ "${HAS_ROLLOUT}" == "true" ]] && [[ ! -z "${POD_CREATION_TIMESTAMP}" ]]; then
-  SA_CREATION_TIMESTAMP="$(kubectl --namespace "${NAMESPACE}" get serviceaccount "${RELEASE_NAME}-admin" --output jsonpath="{.metadata.creationTimestamp}")"
+# find newest running pod timestamp (latest restart moment)
+if [[ "${HAS_ROLLOUT}" == "true" ]]; then
+  POD_CREATION_TIMESTAMP="$(
+    kubectl --namespace "${NAMESPACE}" get pod --selector="${POD_SELECTORS}" --output yaml \
+      | yq --unwrapScalar '
+          .items
+          | map(select(.status.phase == "Running") | .metadata.creationTimestamp)
+          | sort
+          | .[-1]
+        '
+  )"
+fi
 
+if [[ "${HAS_ROLLOUT}" == "true" ]] && [[ -n "${POD_CREATION_TIMESTAMP}" ]]; then
+  # get SA creation timestamp (it always gets recreated by the chart)
+  SA_CREATION_TIMESTAMP="$(kubectl --namespace "${NAMESPACE}" get serviceaccount "${RELEASE_NAME}-admin" --output yaml \
+    | yq --unwrapScalar '.metadata.creationTimestamp')"
+
+  # convert timestamps to epoch seconds
   if [[ "${OS}" == "Linux" ]]; then
-    POD_DATE="$(date -d "$(echo ${POD_CREATION_TIMESTAMP} | sed 's/T/ /; s/Z//')" "+%s")" #todo remove sed
-    SA_DATE="$(date -d "$(echo ${SA_CREATION_TIMESTAMP} | sed 's/T/ /; s/Z//')" "+%s")" #todo remove sed
+    POD_DATE="$(date -d "${POD_CREATION_TIMESTAMP}" +%s)"
+    SA_DATE="$(date -d "${SA_CREATION_TIMESTAMP}" +%s)"
   elif [[ "${OS}" == "Mac" ]]; then
-    POD_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${POD_CREATION_TIMESTAMP}" "+%s")"
-    SA_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${SA_CREATION_TIMESTAMP}" "+%s")"
+    POD_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${POD_CREATION_TIMESTAMP}" +%s)"
+    SA_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${SA_CREATION_TIMESTAMP}" +%s)"
   else
-    echo "Not supported OS ${OS}. Supported: (Mac|Linux)"
+    echo "Unsupported OS ${OS}. Supported: (Mac|Linux)"
     exit 1
   fi
 
-  DIFF_SEC="$((SA_DATE - POD_DATE))"
-  echo "Diff of timestamps: ${DIFF_SEC} seconds"
+  DIFF_SECONDS=$((SA_DATE - POD_DATE))
+  echo "Timestamp difference: ${DIFF_SECONDS} seconds"
 
-  HAS_ROLLING="$((DIFF_SEC > ALLOWED_TIME_SEC))"
-  if [[ -z "${HAS_ROLLING}" || "${HAS_ROLLING}" == "1" ]]; then
-    echo "Forcing rolling update of ${RELEASE_NAME} resources ${RELEASE_NAME}-worker..."
+  # if worker pod started BEFORE the new ServiceAccount → force restart
+  if (( DIFF_SECONDS > ALLOWED_TIME_SECONDS )); then
+    echo "Forcing rolling update of ${RELEASE_NAME}-worker..."
     kubectl --namespace "${NAMESPACE}" rollout restart deployment "${RELEASE_NAME}-worker"
     kubectl --namespace "${NAMESPACE}" rollout status deployment "${RELEASE_NAME}-worker"
   fi
