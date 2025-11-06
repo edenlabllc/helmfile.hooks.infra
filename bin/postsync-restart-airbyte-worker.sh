@@ -13,17 +13,6 @@
 
 set -e
 
-function get_os() {
-  UNAME_OUT="$(uname -s)"
-  case "${UNAME_OUT}" in
-      Linux*)     MACHINE="Linux";;
-      Darwin*)    MACHINE="Mac";;
-      *)          MACHINE="UNKNOWN: ${UNAME_OUT}"
-  esac
-  echo "${MACHINE}"
-}
-
-OS="$(get_os)"
 NAMESPACE="${1:-airbyte}"
 RELEASE_NAME="${2:-airbyte}"
 ALLOWED_TIME_SECONDS="${3:-60}"
@@ -76,22 +65,14 @@ if [[ "${HAS_ROLLOUT}" == "true" ]]; then
   )"
 fi
 
-if [[ "${HAS_ROLLOUT}" == "true" ]] && [[ -n "${POD_CREATION_TIMESTAMP}" ]]; then
+if [[ "${HAS_ROLLOUT}" == "true" && -n "${POD_CREATION_TIMESTAMP}" ]]; then
   # get SA creation timestamp (it always gets recreated by the chart)
   SA_CREATION_TIMESTAMP="$(kubectl --namespace "${NAMESPACE}" get serviceaccount "${RELEASE_NAME}-admin" --output yaml \
     | yq --unwrapScalar '.metadata.creationTimestamp')"
 
   # convert timestamps to epoch seconds
-  if [[ "${OS}" == "Linux" ]]; then
-    POD_DATE="$(date -d "${POD_CREATION_TIMESTAMP}" +%s)"
-    SA_DATE="$(date -d "${SA_CREATION_TIMESTAMP}" +%s)"
-  elif [[ "${OS}" == "Mac" ]]; then
-    POD_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${POD_CREATION_TIMESTAMP}" +%s)"
-    SA_DATE="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${SA_CREATION_TIMESTAMP}" +%s)"
-  else
-    echo "Unsupported OS ${OS}. Supported: (Mac|Linux)"
-    exit 1
-  fi
+  POD_DATE="$(echo "${POD_CREATION_TIMESTAMP}" | yq --unwrapScalar 'fromdateiso8601')"
+  SA_DATE="$(echo "${SA_CREATION_TIMESTAMP}" | yq --unwrapScalar 'fromdateiso8601')"
 
   DIFF_SECONDS=$((SA_DATE - POD_DATE))
   echo "Timestamp difference: ${DIFF_SECONDS} seconds"
