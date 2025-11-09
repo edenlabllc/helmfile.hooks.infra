@@ -12,7 +12,7 @@ while true; do
   RESULT=$(dig +short "${NAME_SERVER}" "${DOMAIN}")
   if [[ ${RESULT} == "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
-    ((++COUNT))
+    (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "Limit exceeded."
     exit 1

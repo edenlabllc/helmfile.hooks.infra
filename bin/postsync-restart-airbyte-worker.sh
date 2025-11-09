@@ -74,7 +74,7 @@ if [[ "${HAS_ROLLOUT}" == "true" && -n "${POD_CREATION_TIMESTAMP}" ]]; then
   POD_DATE="$(echo "${POD_CREATION_TIMESTAMP}" | yq --unwrapScalar 'fromdateiso8601')"
   SA_DATE="$(echo "${SA_CREATION_TIMESTAMP}" | yq --unwrapScalar 'fromdateiso8601')"
 
-  DIFF_SECONDS=$((SA_DATE - POD_DATE))
+  DIFF_SECONDS=$(( SA_DATE - POD_DATE ))
   echo "Timestamp difference: ${DIFF_SECONDS} seconds"
 
   # if worker pod started BEFORE the new ServiceAccount → force restart

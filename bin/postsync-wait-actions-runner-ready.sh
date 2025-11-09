@@ -19,7 +19,7 @@ while true; do
   STATUS="$(kubectl --namespace "${NAMESPACE}" get runnerdeployment,runnerset --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
-    ((++COUNT))
+    (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "Limit exceeded."
     exit 1

@@ -17,7 +17,7 @@ while true; do
   STATUS="$(kubectl --namespace "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}" --output yaml | yq '.status.phase')"
   if [[ "${STATUS}" != "Ready" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
-    ((++COUNT))
+    (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "Limit exceeded."
     exit 1

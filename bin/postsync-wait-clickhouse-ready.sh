@@ -11,7 +11,7 @@ function check_cr() {
 
   if [[ "${OUTPUT}" != "true" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
-    ((++COUNT))
+    (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "Limit exceeded."
     exit 1

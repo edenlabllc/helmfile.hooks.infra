@@ -13,5 +13,5 @@ while [[ "$(kubectl get persistentvolume --output='yaml' | yq '[.items[] | selec
 
   echo "EBS volumes in the process of being removed..."
   sleep 1
-  ((++COUNT))
+  (( ++COUNT ))
 done

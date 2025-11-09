@@ -25,6 +25,6 @@ for PVC_ID in ${PVC_IDS[*]}; do
 
     echo "Persistent volume ${PVC_ID} in the process of being removed..."
     sleep 1
-    ((++COUNT))
+    (( ++COUNT ))
   done
 done

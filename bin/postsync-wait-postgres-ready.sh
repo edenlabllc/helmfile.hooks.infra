@@ -63,7 +63,7 @@ while true; do
     echo "Resource ${CRD_NAME} cluster ${CLUSTER_NAME} not exist."
     break
   elif [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
-    ((++COUNT))
+    (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "Limit exceeded."
     exit 1

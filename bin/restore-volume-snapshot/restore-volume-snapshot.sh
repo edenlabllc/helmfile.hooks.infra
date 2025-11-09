@@ -55,7 +55,7 @@ function check_inventory() {
   fi
 
   COUNT_RELEASES="$(yq '.releases | length' "${INVENTORY_FILE}")"
-  if ((COUNT_RELEASES == 0)); then
+  if (( COUNT_RELEASES == 0 )); then
     >&2 echo "ERROR: the inventory file does not contain the listed releases."
     return 1
   fi
@@ -64,7 +64,7 @@ function check_inventory() {
 function check_inventory_release_resource() {
   check_inventory
   COUNT_RESOURCES="$(yq '.releases.'"${RELEASE_NAME}"' | length' "${INVENTORY_FILE}")"
-  if ((COUNT_RESOURCES == 0)); then
+  if (( COUNT_RESOURCES == 0 )); then
     >&2 echo "ERROR: the inventory file does not contain the listed resources for selected release ${RELEASE_NAME}."
     return 1
   fi
@@ -76,7 +76,7 @@ function check_inventory_release_resource() {
 function validate_inventory_release_options() {
   KEY_OPTION="$(yq '.releases.'"${RELEASE_NAME}"'.'"${1}"' | has("'"${2}"'")' "${INVENTORY_FILE}")"
   LEN_VALUE_OPTION="$(yq '.releases.'"${RELEASE_NAME}"'.'"${1}"'.'"${2}"'| length' "${INVENTORY_FILE}")"
-  if [[ "${KEY_OPTION}" == "false" ]] || ((LEN_VALUE_OPTION == 0)); then
+  if [[ "${KEY_OPTION}" == "false" ]] || (( LEN_VALUE_OPTION == 0 )); then
     >&2 echo "ERROR: the inventory file does not contain the option ${2} in resource ${1} for selected release ${RELEASE_NAME}."
     return 1
   fi
@@ -104,13 +104,13 @@ function get_inventory_release_options() {
     LABELS_COUNT=0
     IFS=$'\n'
     for ITEM in $(yq --unwrapScalar '.releases.'"${RELEASE_NAME}"'.'"${1}"'.claimSelector.matchLabels' "${INVENTORY_FILE}"); do
-      if ((LABELS_COUNT == 0)); then
+      if (( LABELS_COUNT == 0 )); then
         INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS="${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}${ITEM/: /=}"
       else
         INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS="${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS},${ITEM/: /=}"
       fi
 
-      ((++LABELS_COUNT))
+      (( ++LABELS_COUNT ))
     done
 
     INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS="--selector ${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}"
@@ -137,7 +137,7 @@ function get_existing_pvcs() {
 }
 
 function add_separators() {
-  if ((${1} <= PVC_LENGTH-1)); then
+  if (( ${1} <= PVC_LENGTH - 1 )); then
     echo "---" >> "${2}"
   fi
 }
@@ -166,7 +166,7 @@ function prepare_pvcs() {
             "name":"'"${PVC_NAME}"'-'"${RELEASE_NAME}"'-ebs-csi-snapshot-'"${SNAPSHOT_DATE}"'"}}' >> "${PVC_PREPARE_FILE}"
     fi
 
-    ((++COUNT))
+    (( ++COUNT ))
     add_separators "${COUNT}" "${PVC_PREPARE_FILE}"
   done
 }
@@ -188,7 +188,7 @@ function restore_pvcs() {
         {"volumeMode": "Filesystem", "volumeName": "'"${PV_NAME}"'"}' "${PVC_PREPARE_FILE}" >> "${PVC_RESTORE_FILE}"
     fi
 
-    ((++COUNT))
+    (( ++COUNT ))
     add_separators "${COUNT}" "${PVC_RESTORE_FILE}"
   done
 }
@@ -215,10 +215,10 @@ function scale_release_resources() {
       get_available_replicas
       echo "Inventory ${INVENTORY_RELEASE_RESOURCE_NAME} replicas count: ${INVENTORY_RELEASE_REPLICAS_COUNT}"
       echo "Available ${INVENTORY_RELEASE_RESOURCE_NAME} replicas count: ${AVAILABLE_REPLICAS}"
-      if (("${2}")); then
+      if (( "${2}" )); then
         kubectl --namespace "${INVENTORY_RELEASE_NAMESPACE}" scale "${INVENTORY_RELEASE_RESOURCE_TYPE}" "${INVENTORY_RELEASE_RESOURCE_NAME}" --replicas="${COUNT}"
         echo -ne "Wait ${3} ${RELEASE_NAME} release for resource: ${INVENTORY_RELEASE_RESOURCE_TYPE}, name: ${INVENTORY_RELEASE_RESOURCE_NAME}"
-        while (("${4}")); do
+        while (( "${4}" )); do
           get_available_replicas
           echo -ne " . "
           sleep 1
@@ -294,13 +294,13 @@ list-snapshots|ls)
   VOLUME_SNAPSHOT_NAME=""
   VOLUME_SNAPSHOT_COUNT=0
   for PVC_NAME in $(eval kubectl --namespace "${INVENTORY_RELEASE_NAMESPACE}" get persistentvolumeclaim --output yaml "${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}" | yq '.items[].metadata.name'); do
-    if ((VOLUME_SNAPSHOT_COUNT == 0)); then
+    if (( VOLUME_SNAPSHOT_COUNT == 0 )); then
       VOLUME_SNAPSHOT_NAME="${VOLUME_SNAPSHOT_NAME}^${PVC_NAME}-${RELEASE_NAME}-ebs-csi-snapshot-.+$"
     else
       VOLUME_SNAPSHOT_NAME="${VOLUME_SNAPSHOT_NAME}|^${PVC_NAME}-${RELEASE_NAME}-ebs-csi-snapshot-.+$"
     fi
 
-    ((++VOLUME_SNAPSHOT_COUNT))
+    (( ++VOLUME_SNAPSHOT_COUNT ))
   done
 
   kubectl --namespace "${INVENTORY_RELEASE_NAMESPACE}" get volumesnapshot --output yaml | yq '.items[].metadata.name | select(test("'"${VOLUME_SNAPSHOT_NAME}"'"))'
