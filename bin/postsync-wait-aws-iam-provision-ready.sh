@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1:-aws-iam-provision}"
-NAMESPACE="${2:-capa-system}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-120}"
 
 GO_TEMPLATE='

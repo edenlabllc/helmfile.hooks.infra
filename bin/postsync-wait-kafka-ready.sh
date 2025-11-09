@@ -7,8 +7,8 @@ if [[ "${SKIP_KAFKA_POSTSYNC_HOOK}" == "true" ]]; then
   exit 0
 fi
 
-RELEASE_NAME="${1:-kafka}"
-NAMESPACE="${2:-kafka}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-180}"
 
 # higher sleep is needed to wait till the operator starts updating the resources

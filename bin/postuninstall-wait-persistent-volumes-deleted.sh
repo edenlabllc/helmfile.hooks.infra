@@ -3,14 +3,18 @@
 set -e
 
 NAMESPACE="${1}"
-K8S_LABELS=("${@}")
-LIMIT="120"
+ALL_ARGS=("${@}")
+LAST_ARG="${ALL_ARGS[-1]}"
 
-if [[ ! "${2}" =~ ^[0-9]+$ ]];then
-    K8S_LABELS=("${K8S_LABELS[@]:1}")
+# Check if last argument is a number (LIMIT), if not use default
+if [[ "${LAST_ARG}" =~ ^[0-9]+$ ]]; then
+    LIMIT="${LAST_ARG}"
+    # Labels are all arguments except NAMESPACE (${1}) and LIMIT (last)
+    K8S_LABELS=("${ALL_ARGS[@]:1:$((${#ALL_ARGS[@]}-2))}")
 else
-    LIMIT="${2}"
-    K8S_LABELS=("${K8S_LABELS[@]:2}")
+    LIMIT="120"
+    # Labels are all arguments except NAMESPACE (${1})
+    K8S_LABELS=("${ALL_ARGS[@]:1}")
 fi
 
 # Convert array to comma-separated string for selector

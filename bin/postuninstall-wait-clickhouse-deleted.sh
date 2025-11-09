@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1:-clickhouse}"
-NAMESPACE="${2:-clickhouse}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-180}"
 
 function check_cr() {

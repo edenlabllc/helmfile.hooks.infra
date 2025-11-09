@@ -7,8 +7,8 @@ if [[ "${SKIP_ELASTIC_POSTSYNC_HOOK}" == "true" ]]; then
   exit 0
 fi
 
-RELEASE_NAME="${1:-elastic}"
-NAMESPACE="${2:-elastic}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-240}"
 
 COUNT=1

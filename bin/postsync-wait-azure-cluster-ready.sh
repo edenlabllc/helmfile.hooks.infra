@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1}"
-NAMESPACE="${2:-azure}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-1200}"
 
 GO_TEMPLATE='

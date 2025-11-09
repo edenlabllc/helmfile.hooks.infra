@@ -13,8 +13,8 @@ set -e
 # the airbyte-worker pod begins using the actual ServiceAccount.
 # The hook is intended to be used on the postsync event of the airbyte's release.
 
-NAMESPACE="${1:-airbyte}"
-RELEASE_NAME="${2:-airbyte}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 ALLOWED_TIME_SECONDS="${3:-60}"
 
 if [[ -z "${ALLOWED_TIME_SECONDS}" || "${ALLOWED_TIME_SECONDS}" == "0" ]] ; then

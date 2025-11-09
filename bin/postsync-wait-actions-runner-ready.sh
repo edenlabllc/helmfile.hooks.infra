@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1:-actions-runner}"
-NAMESPACE="${2:-actions-runner}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-180}"
 
 # Note: The hook is only valid for static self-hosted runners (not created by HorizontalRunnerAutoscaler from 0)

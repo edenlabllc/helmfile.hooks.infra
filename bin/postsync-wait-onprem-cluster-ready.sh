@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1}"
-NAMESPACE="${2:-capop-system}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-3600}"
 
 GO_TEMPLATE='

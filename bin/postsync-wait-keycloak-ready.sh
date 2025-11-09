@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1}"
-NAMESPACE="${2:-keycloak}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 STATUS_TYPE="${3:-Ready}"
 KEYCLOAK_RESOURCE="${4:-keycloak}"
 LIMIT="${5:-180}"

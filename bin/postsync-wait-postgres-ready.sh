@@ -7,11 +7,11 @@ if [[ "${SKIP_POSTGRES_POSTSYNC_HOOK}" == "true" ]]; then
   exit 0
 fi
 
-CLUSTER_NAME="${1:-postgres-cluster}"
-NAMESPACE="${2:-postgres}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 CRD_NAME="${3:-postgresql}"
-LIMIT="${4:-600}"
-PATCH_PGHOST="${5:-false}"
+PATCH_PGHOST="${4:-false}"
+LIMIT="${5:-600}"
 
 COUNT=1
 
@@ -58,9 +58,9 @@ function prepare_pgbouncer() {
 
 while true; do
   sleep 1
-  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}" --output yaml | yq '.status.PostgresClusterStatus')"
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${RELEASE_NAME}" --output yaml | yq '.status.PostgresClusterStatus')"
   if [[ "${STATUS}" == "null" ]]; then
-    echo "Resource ${CRD_NAME} cluster ${CLUSTER_NAME} not exist."
+    echo "Resource ${CRD_NAME} cluster ${RELEASE_NAME} not exist."
     break
   elif [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
     (( ++COUNT ))
@@ -68,10 +68,10 @@ while true; do
     >&2 echo "Limit exceeded."
     exit 1
   else
-    kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${CLUSTER_NAME}"
+    kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${RELEASE_NAME}"
     break
   fi
 done
 
-prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
-prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
+prepare_pgbouncer "${RELEASE_NAME}-pooler" "${RELEASE_NAME}"
+prepare_pgbouncer "${RELEASE_NAME}-pooler-repl" "${RELEASE_NAME}-repl"

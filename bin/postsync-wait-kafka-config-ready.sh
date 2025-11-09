@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1}"
-NAMESPACE="${2:-kafka}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-180}"
 
 # for kafkaconnector also check connector and tasks' states in .status.connectorStatus

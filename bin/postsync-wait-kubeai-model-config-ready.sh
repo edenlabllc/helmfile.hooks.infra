@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_NAME="${1}"
-NAMESPACE="${2:-kubeai}"
+NAMESPACE="${1}"
+RELEASE_NAME="${2}"
 LIMIT="${3:-10800}" # 3 hours (max time to load an AI model)
 
 GO_TEMPLATE='
