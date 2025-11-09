@@ -2,15 +2,15 @@
 
 set -e
 
-MONGODB_NAMESPACE=${1}
-MONGODB_RELEASE_NAME=${2}
-MONGODB_CONTAINER_NAME=mongodb
+MONGODB_NAMESPACE="${1}"
+MONGODB_RELEASE_NAME="${2}"
+MONGODB_CONTAINER_NAME="mongodb"
 
-MONGODB_USERNAME=${3}
-MONGODB_PASSWORD=${4}
-MONGODB_DATABASE=${5}
+MONGODB_USERNAME="${3}"
+MONGODB_PASSWORD="${4}"
+MONGODB_DATABASE="${5}"
 
-MONGODB_USER_PERMISSIONS=readWrite
+MONGODB_USER_PERMISSIONS="readWrite"
 
 function mongodb_exec() {
   kubectl --namespace "${MONGODB_NAMESPACE}" exec --stdin "${MONGODB_RELEASE_NAME}-0" --container "${MONGODB_CONTAINER_NAME}" -- bash -c "${1}"
@@ -30,8 +30,8 @@ function create_user() {
 }
 
 set +e
-CHECK_USER=$(check_user 2> /dev/null)
-RESULT=$(echo "${CHECK_USER}" | yq --unwrapScalar '.roles[].role' 2> /dev/null)
+CHECK_USER="$(check_user 2> /dev/null)"
+RESULT="$(echo "${CHECK_USER}" | yq --unwrapScalar '.roles[].role' 2> /dev/null)"
 set -e
 
 MESSAGE="MongoDB user \"${MONGODB_USERNAME}\" with permissions \"${MONGODB_USER_PERMISSIONS}\" to database \"${MONGODB_DATABASE}\""

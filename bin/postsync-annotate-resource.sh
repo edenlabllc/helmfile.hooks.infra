@@ -13,12 +13,12 @@ K8S_ANNOTATIONS="${K8S_ANNOTATIONS[@]:5}"
 
 if [[ "${CURRENT_ENVIRONMENT}" != "${EXPECTED_ENVIRONMENT}" ]]; then
   echo "Environment ${CURRENT_ENVIRONMENT} skipped when annotating, expected: ${EXPECTED_ENVIRONMENT}"
-  exit
+  exit 0
 fi
 
 if [[ "${K8S_RESOURCE_TYPE}" == "pod" ]]; then
   echo "Annotating all pods with prefix ${K8S_RESOURCE_NAME} in namespace ${K8S_NAMESPACE}"
-  PODS=$(kubectl --namespace "${K8S_NAMESPACE}" get pod --output='yaml' | yq --unwrapScalar '.items[].metadata.name | select(test("'"^${K8S_RESOURCE_NAME}"'"))')
+  PODS="$(kubectl --namespace "${K8S_NAMESPACE}" get pod --output='yaml' | yq --unwrapScalar '.items[].metadata.name | select(test("'"^${K8S_RESOURCE_NAME}"'"))')"
   if [[ -z "${PODS}" ]]; then
     echo "No pods found with prefix ${K8S_RESOURCE_NAME}"
     exit 0

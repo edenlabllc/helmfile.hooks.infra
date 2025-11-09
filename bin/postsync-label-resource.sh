@@ -13,7 +13,7 @@ K8S_LABELS="${K8S_LABELS[@]:5}"
 
 if [[ "${CURRENT_ENVIRONMENT}" != "${EXPECTED_ENVIRONMENT}" ]]; then
   echo "Environment ${CURRENT_ENVIRONMENT} skipped when labeling, expected: ${EXPECTED_ENVIRONMENT}"
-  exit
+  exit 0
 fi
 
 if [[ "${K8S_RESOURCE_TYPE}" == "pod" ]]; then

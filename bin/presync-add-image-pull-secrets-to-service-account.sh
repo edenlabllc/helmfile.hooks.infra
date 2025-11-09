@@ -10,7 +10,7 @@ IPS_NAME="${5}"
 
 if [[ "${ENABLE_HOOK}" != "true" ]]; then
   echo "Skipped."
-  exit
+  exit 0
 fi
 
 if [[ "${ENSURE_SA_CREATED}" == "true" ]]; then

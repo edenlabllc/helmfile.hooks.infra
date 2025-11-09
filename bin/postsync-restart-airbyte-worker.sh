@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # This hook restarts the airbyte-worker pods if they were not restarted
 # during the latest airbyte's release sync. This helps to resolve an issue
 # when the airbyte-worker uses a revoked airbyte-admin ServiceAccount (https://github.com/airbytehq/airbyte/issues/7211).
@@ -10,8 +12,6 @@
 # during the airbyte's operations when it tries to create new pods. After a restart
 # the airbyte-worker pod begins using the actual ServiceAccount.
 # The hook is intended to be used on the postsync event of the airbyte's release.
-
-set -e
 
 NAMESPACE="${1:-airbyte}"
 RELEASE_NAME="${2:-airbyte}"

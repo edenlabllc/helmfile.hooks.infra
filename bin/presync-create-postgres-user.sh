@@ -2,7 +2,7 @@
 
 set -e
 
-NAMESPACE=${1}
+NAMESPACE="${1}"
 PG_DB_NAMES=("${2}")
 PG_DB_USERNAME="${3}"
 PG_CLUSTER_NAME="${4:-postgres-cluster}"

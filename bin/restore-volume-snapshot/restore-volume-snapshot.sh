@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
+set -e
+
 ### RESTORE VOLUME SNAPSHOT script ###
 # Requirements:
 #   - yq >= 4.28.*
 #   - Initialized tenant repo via RMK.
 #   - Previously installed and running ebs-csi-snapshot-scheduler for the required release.
-
-set -e
 
 readonly COMMAND="${1}"
 readonly RELEASE_NAME="${2}"
