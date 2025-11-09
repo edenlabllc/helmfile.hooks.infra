@@ -4,38 +4,38 @@ set -e
 
 CURRENT_ENVIRONMENT="${1}"
 EXPECTED_ENVIRONMENT="${2}"
-K8S_NAMESPACE="${3}"
-K8S_RESOURCE_TYPE="${4}"
-K8S_RESOURCE_NAME_OR_PREFIX="${5}"
+NAMESPACE="${3}"
+RESOURCE_TYPE="${4}"
+RESOURCE_NAME_OR_PREFIX="${5}"
 # get rest of arguments
-K8S_LABELS=("${@}")
-K8S_LABELS="${K8S_LABELS[@]:5}"
+LABELS=("${@}")
+LABELS="${LABELS[@]:5}"
 
 if [[ "${CURRENT_ENVIRONMENT}" != "${EXPECTED_ENVIRONMENT}" ]]; then
   echo "Environment ${CURRENT_ENVIRONMENT} skipped when labeling, expected: ${EXPECTED_ENVIRONMENT}"
   exit 0
 fi
 
-if [[ "${K8S_RESOURCE_TYPE}" == "pod" ]]; then
-  echo "Annotating all pods with prefix ${K8S_RESOURCE_NAME_OR_PREFIX}- in namespace ${K8S_NAMESPACE}"
+if [[ "${RESOURCE_TYPE}" == "pod" ]]; then
+  echo "Annotating all pods with prefix ${RESOURCE_NAME_OR_PREFIX}- in namespace ${NAMESPACE}"
 
   PODS="$(
-    kubectl --namespace "${K8S_NAMESPACE}" get pod --output yaml \
+    kubectl --namespace "${NAMESPACE}" get pod --output yaml \
       | yq --unwrapScalar '
           .items[]
-          | select(.metadata.name | startswith("'"${K8S_RESOURCE_NAME_OR_PREFIX}"'-"))
+          | select(.metadata.name | startswith("'"${RESOURCE_NAME_OR_PREFIX}"'-"))
           | .metadata.name
         '
   )"
 
   if [[ -z "${PODS}" ]]; then
-    echo "No pods found with prefix ${K8S_RESOURCE_NAME_OR_PREFIX}-"
+    echo "No pods found with prefix ${RESOURCE_NAME_OR_PREFIX}-"
     exit 0
   fi
 
   for POD in ${PODS}; do
-    kubectl --namespace "${K8S_NAMESPACE}" label --overwrite pod "${POD}" ${K8S_LABELS}
+    kubectl --namespace "${NAMESPACE}" label --overwrite pod "${POD}" ${LABELS}
   done
 else
-  kubectl --namespace "${K8S_NAMESPACE}" label --overwrite "${K8S_RESOURCE_TYPE}" "${K8S_RESOURCE_NAME_OR_PREFIX}" ${K8S_LABELS}
+  kubectl --namespace "${NAMESPACE}" label --overwrite "${RESOURCE_TYPE}" "${RESOURCE_NAME_OR_PREFIX}" ${LABELS}
 fi

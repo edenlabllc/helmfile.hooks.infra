@@ -17,13 +17,13 @@ GO_TEMPLATE='
 
 COUNT=1
 
-K8S_API_GROUP="iam.services.k8s.aws"
-K8S_RESOURCES=("group" "instanceprofile" "openidconnectprovider" "role" "policy" "user")
-K8S_RESOURCES=("${K8S_RESOURCES[@]/%/.${K8S_API_GROUP}}") # add ".${K8S_API_GROUP}" suffix to each array item
-K8S_RESOURCES="$(IFS=,; echo "${K8S_RESOURCES[*]}")" # join array by ","
+API_GROUP="iam.services.k8s.aws"
+RESOURCES=("group" "instanceprofile" "openidconnectprovider" "role" "policy" "user")
+RESOURCES=("${RESOURCES[@]/%/.${API_GROUP}}") # add ".${API_GROUP}" suffix to each array item
+RESOURCES="$(IFS=,; echo "${RESOURCES[*]}")" # join array by ","
 
 while true; do
-  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${K8S_RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     (( ++COUNT ))
@@ -32,7 +32,7 @@ while true; do
     exit 1
   else
     echo
-    kubectl --namespace "${NAMESPACE}" get "${K8S_RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}"
+    kubectl --namespace "${NAMESPACE}" get "${RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}"
     break
   fi
 done

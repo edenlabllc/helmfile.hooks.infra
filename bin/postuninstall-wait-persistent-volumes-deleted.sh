@@ -10,16 +10,16 @@ LAST_ARG="${ALL_ARGS[-1]}"
 if [[ "${LAST_ARG}" =~ ^[0-9]+$ ]]; then
     LIMIT="${LAST_ARG}"
     # Labels are all arguments except NAMESPACE (${1}) and LIMIT (last)
-    K8S_LABELS=("${ALL_ARGS[@]:1:$((${#ALL_ARGS[@]}-2))}")
+    LABELS=("${ALL_ARGS[@]:1:$((${#ALL_ARGS[@]}-2))}")
 else
     LIMIT="120"
     # Labels are all arguments except NAMESPACE (${1})
-    K8S_LABELS=("${ALL_ARGS[@]:1}")
+    LABELS=("${ALL_ARGS[@]:1}")
 fi
 
 # Convert array to comma-separated string for selector
-K8S_LABELS_STR="$(IFS=','; echo "${K8S_LABELS[*]}")"
-mapfile -t PVC_IDS < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${K8S_LABELS_STR}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
+LABELS_STR="$(IFS=','; echo "${LABELS[*]}")"
+mapfile -t PVC_IDS < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${LABELS_STR}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
 
 for PVC_ID in "${PVC_IDS[@]}"; do
   COUNT=1
