@@ -74,8 +74,8 @@ function check_inventory_release_resource() {
 # Reading and validating an inventory file.
 ###
 function validate_inventory_release_options() {
-  KEY_OPTION="$(yq '.releases.'"${RELEASE_NAME}"'.'"${1}"' | has("'"${2}"'")' "${INVENTORY_FILE}")"
-  LEN_VALUE_OPTION="$(yq '.releases.'"${RELEASE_NAME}"'.'"${1}"'.'"${2}"'| length' "${INVENTORY_FILE}")"
+  local KEY_OPTION="$(yq '.releases.'"${RELEASE_NAME}"'.'"${1}"' | has("'"${2}"'")' "${INVENTORY_FILE}")"
+  local LEN_VALUE_OPTION="$(yq '.releases.'"${RELEASE_NAME}"'.'"${1}"'.'"${2}"'| length' "${INVENTORY_FILE}")"
   if [[ "${KEY_OPTION}" == "false" ]] || (( LEN_VALUE_OPTION == 0 )); then
     >&2 echo "ERROR: the inventory file does not contain the option ${2} in resource ${1} for selected release ${RELEASE_NAME}."
     return 1
@@ -101,7 +101,9 @@ function get_inventory_release_options() {
 
     validate_inventory_release_options "${1}.claimSelector" matchLabels
 
-    LABELS_COUNT=0
+    local LABELS_COUNT=0
+    local ITEM
+    local OLD_IFS_LOCAL="${IFS}"
     IFS=$'\n'
     for ITEM in $(yq --unwrapScalar '.releases.'"${RELEASE_NAME}"'.'"${1}"'.claimSelector.matchLabels' "${INVENTORY_FILE}"); do
       if (( LABELS_COUNT == 0 )); then
@@ -112,6 +114,7 @@ function get_inventory_release_options() {
 
       (( ++LABELS_COUNT ))
     done
+    IFS="${OLD_IFS_LOCAL}"
 
     INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS="--selector ${INVENTORY_RELEASE_CLAIM_SELECTOR_MATCH_LABELS}"
   else
@@ -137,7 +140,7 @@ function get_existing_pvcs() {
 }
 
 function add_separators() {
-  if (( ${1} <= PVC_LENGTH - 1 )); then
+  if (( "${1}" <= PVC_LENGTH - 1 )); then
     echo "---" >> "${2}"
   fi
 }
@@ -153,7 +156,8 @@ function get_current_pvc_data() {
 }
 
 function prepare_pvcs() {
-  COUNT=0
+  local COUNT=0
+  local PVC_NAME
   touch "${PVC_PREPARE_FILE}"
   while [ "${COUNT}" -lt "${PVC_LENGTH}" ]; do
     PVC_NAME="$(echo "${PVC_DATA}" | yq '.['"${COUNT}"'].metadata.name')"
@@ -177,7 +181,9 @@ function restore_pvcs() {
     return 1
   fi
 
-  COUNT=0
+  local COUNT=0
+  local PVC_NAME
+  local PV_NAME
   touch "${PVC_RESTORE_FILE}"
   while [ "${COUNT}" -lt "${PVC_LENGTH}" ]; do
     PVC_NAME="$(echo "${PVC_DATA}" | yq '.['"${COUNT}"'].metadata.name')"
@@ -202,8 +208,9 @@ function get_available_replicas() {
 }
 
 function scale_release_resources() {
-  RESOURCES=("${1}")
-  COUNT=0
+  local RESOURCES=("${1}")
+  local COUNT=0
+  local RESOURCE
   IFS="${OLD_IFS}"
 
   for RESOURCE in "${RESOURCES[@]}"; do
