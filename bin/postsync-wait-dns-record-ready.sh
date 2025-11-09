@@ -9,8 +9,8 @@ LIMIT="${3:-120}"
 COUNT=1
 
 while true; do
-  RESULT=$(dig +short "${NAME_SERVER}" "${DOMAIN}")
-  if [[ ${RESULT} == "" && "${COUNT}" -le "${LIMIT}" ]]; then
+  RESULT="$(dig +short "${NAME_SERVER}" "${DOMAIN}")"
+  if [[ "${RESULT}" == "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then

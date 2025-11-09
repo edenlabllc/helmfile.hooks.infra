@@ -206,7 +206,7 @@ function scale_release_resources() {
   COUNT=0
   IFS="${OLD_IFS}"
 
-  for RESOURCE in ${RESOURCES[*]}; do
+  for RESOURCE in "${RESOURCES[@]}"; do
     if get_inventory_release_options "${RESOURCE}"; then
       if [[ "${3}" == "upscale" ]]; then
         COUNT="${INVENTORY_RELEASE_REPLICAS_COUNT}"

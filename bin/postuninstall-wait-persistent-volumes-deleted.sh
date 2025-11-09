@@ -7,15 +7,17 @@ K8S_LABELS=("${@}")
 LIMIT="120"
 
 if [[ ! "${2}" =~ ^[0-9]+$ ]];then
-    K8S_LABELS="${K8S_LABELS[@]:1}"
+    K8S_LABELS=("${K8S_LABELS[@]:1}")
 else
     LIMIT="${2}"
-    K8S_LABELS="${K8S_LABELS[@]:2}"
+    K8S_LABELS=("${K8S_LABELS[@]:2}")
 fi
 
-PVC_IDS=( "$(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${K8S_LABELS/ /,}" --output yaml | yq '.items[].spec.volumeName')" )
+# Convert array to comma-separated string for selector
+K8S_LABELS_STR="$(IFS=','; echo "${K8S_LABELS[*]}")"
+mapfile -t PVC_IDS < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${K8S_LABELS_STR}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
 
-for PVC_ID in ${PVC_IDS[*]}; do
+for PVC_ID in "${PVC_IDS[@]}"; do
   COUNT=1
   while (kubectl get persistentvolume "${PVC_ID}" &> /dev/null); do
     if (( COUNT > LIMIT )); then

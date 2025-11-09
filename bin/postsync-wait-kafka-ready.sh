@@ -78,7 +78,7 @@ K8S_RESOURCES="deployment,kafka,kafkanodepool,statefulset,strimzipodset"
 while true; do
   STATUS="$(kubectl --namespace "${NAMESPACE}" get "${K8S_RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
-    sleep ${SLEEP}
+    sleep "${SLEEP}"
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "Limit exceeded."

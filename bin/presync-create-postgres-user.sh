@@ -11,7 +11,7 @@ PG_CRD_NAME="${6:-postgresql}"
 PG_ENABLE_DEFAULT_USERS="${7:-false}"
 
 function create_default_user() {
-  for DB in ${PG_DB_NAMES[*]}; do
+  for DB in "${PG_DB_NAMES[@]}"; do
     local DEFAULT_OWNER_USER="${DB}_owner_user"
     local SECRET_PREFIX="${DEFAULT_OWNER_USER//_/-}.${PG_CLUSTER_NAME}"
 
@@ -36,7 +36,7 @@ function create_custom_user() {
     kubectl --namespace "${PG_NAMESPACE}" patch "${PG_CRD_NAME}" "${PG_CLUSTER_NAME}" --type=merge \
       --patch '{"spec":{"users":{"'"${NAMESPACE}"'.'"${PG_DB_USERNAME}"'":["createdb"]}}}'
 
-    for DB in ${PG_DB_NAMES[*]}; do
+    for DB in "${PG_DB_NAMES[@]}"; do
       kubectl --namespace "${PG_NAMESPACE}" patch "${PG_CRD_NAME}" "${PG_CLUSTER_NAME}" --type=merge \
         --patch '{"spec":{"databases":{"'"${DB}"'":"'"${NAMESPACE}"'.'"${PG_DB_USERNAME}"'"}}}'
     done
