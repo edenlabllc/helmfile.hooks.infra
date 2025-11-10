@@ -2,8 +2,8 @@
 
 set -e
 
-JOB_PREFIX="${1}"
-NAMESPACE="${2}"
+NAMESPACE="${1}"
+JOB_PREFIX="${2}"
 
 # Get all job names matching prefix
 JOB_NAMES="$(

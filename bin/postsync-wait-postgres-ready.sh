@@ -2,16 +2,10 @@
 
 set -e
 
-if [[ "${SKIP_POSTGRES_POSTSYNC_HOOK}" == "true" ]]; then
-  echo "Skipped."
-  exit 0
-fi
-
 NAMESPACE="${1}"
 RELEASE_NAME="${2}"
-CRD_NAME="${3:-postgresql}"
-PATCH_PGHOST="${4:-false}"
-LIMIT="${5:-600}"
+PATCH_PGHOST_VAR="${3:-false}"
+LIMIT="${4:-600}"
 
 COUNT=1
 
@@ -40,7 +34,7 @@ function prepare_pgbouncer() {
       -p '{"spec": {"template": {"metadata": {"annotations": {"prometheus.io/scrape": "false"}}}}}'
     kubectl --namespace "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
 
-    if [[ "${PATCH_PGHOST}" == "true" ]]; then
+    if [[ "${PATCH_PGHOST_VAR}" == "true" ]]; then
       echo "Patching ${POOLER_NAME} PGHOST env..."
       kubectl --namespace "${NAMESPACE}" patch deployment "${POOLER_NAME}" --type='strategic' \
         -p '{"spec":{"template":{"spec":{"containers":[{"name":"connection-pooler","env":[{"name":"PGHOST","value":"'${SVC_NAME}'.'${NAMESPACE}'.svc.cluster.local"}]}]}}}}'
@@ -58,9 +52,9 @@ function prepare_pgbouncer() {
 
 while true; do
   sleep 1
-  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${RELEASE_NAME}" --output yaml | yq '.status.PostgresClusterStatus')"
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get postgresql "${RELEASE_NAME}" --output yaml | yq '.status.PostgresClusterStatus')"
   if [[ "${STATUS}" == "null" ]]; then
-    echo "Resource ${CRD_NAME} cluster ${RELEASE_NAME} not exist."
+    echo "Resource postgresql cluster ${RELEASE_NAME} not exist."
     break
   elif [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
     (( ++COUNT ))
@@ -68,7 +62,7 @@ while true; do
     >&2 echo "Limit exceeded."
     exit 1
   else
-    kubectl --namespace "${NAMESPACE}" get "${CRD_NAME}" "${RELEASE_NAME}"
+    kubectl --namespace "${NAMESPACE}" get postgresql "${RELEASE_NAME}"
     break
   fi
 done

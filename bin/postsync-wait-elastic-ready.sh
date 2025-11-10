@@ -2,11 +2,6 @@
 
 set -e
 
-if [[ "${SKIP_ELASTIC_POSTSYNC_HOOK}" == "true" ]]; then
-  echo "Skipped."
-  exit 0
-fi
-
 NAMESPACE="${1}"
 RELEASE_NAME="${2}"
 LIMIT="${3:-240}"

@@ -2,11 +2,11 @@
 
 set -e
 
-ENABLE_HOOK="${1}"
-ENSURE_SA_CREATED="${2}"
-NAMESPACE="${3}"
-SA_NAME="${4}"
-IPS_NAME="${5}"
+NAMESPACE="${1}"
+SA_NAME="${2}"
+IPS_NAME="${3}"
+ENABLE_HOOK="${4:-true}"
+ENSURE_SA_CREATED="${5:-false}"
 
 if [[ "${ENABLE_HOOK}" != "true" ]]; then
   echo "Skipped."

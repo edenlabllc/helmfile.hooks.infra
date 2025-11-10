@@ -3,12 +3,11 @@
 set -e
 
 NAMESPACE="${1}"
-DATABASES=("${2}")
-USERNAME="${3}"
-CLUSTER_NAME="${4:-postgres-cluster}"
-CLUSTER_NAMESPACE="${5:-postgres}"
-CRD_NAME="${6:-postgresql}"
-ENABLE_DEFAULT_USERS="${7:-false}"
+CLUSTER_NAME="${2}"
+CLUSTER_NAMESPACE="${3}"
+USERNAME="${4}"
+DATABASES=("${5}")
+ENABLE_DEFAULT_USERS="${6:-false}"
 
 function create_default_user() {
   for DB in "${DATABASES[@]}"; do
@@ -18,9 +17,9 @@ function create_default_user() {
     # Check secret existence without grep
     if ! (kubectl --namespace "${NAMESPACE}" get secret --output yaml \
       | yq --exit-status ".items[].metadata.name | select(startswith(\"${SECRET_PREFIX}\"))" > /dev/null); then
-      kubectl --namespace "${CLUSTER_NAMESPACE}" patch "${CRD_NAME}" "${CLUSTER_NAME}" --type=merge \
+      kubectl --namespace "${CLUSTER_NAMESPACE}" patch postgresql "${CLUSTER_NAME}" --type=merge \
         --patch '{"spec":{"databases":{"'"${DB}"'":"'"${DEFAULT_OWNER_USER}"'"}}}'
-      kubectl --namespace "${CLUSTER_NAMESPACE}" patch "${CRD_NAME}" "${CLUSTER_NAME}" --type=merge \
+      kubectl --namespace "${CLUSTER_NAMESPACE}" patch postgresql "${CLUSTER_NAME}" --type=merge \
         --patch '{"spec":{"preparedDatabases":{"'"${DB}"'":{"defaultUsers":true,"schemas":{"public":{"defaultRoles":false}},"secretNamespace":"'"${NAMESPACE}"'"}}}}'
     fi
   done
@@ -33,11 +32,11 @@ function create_custom_user() {
 
   if ! (kubectl --namespace "${NAMESPACE}" get secret --output yaml \
     | yq --exit-status ".items[].metadata.name | select(startswith(\"${SECRET_PREFIX}\"))" > /dev/null); then
-    kubectl --namespace "${CLUSTER_NAMESPACE}" patch "${CRD_NAME}" "${CLUSTER_NAME}" --type=merge \
+    kubectl --namespace "${CLUSTER_NAMESPACE}" patch postgresql "${CLUSTER_NAME}" --type=merge \
       --patch '{"spec":{"users":{"'"${NAMESPACE}"'.'"${USERNAME}"'":["createdb"]}}}'
 
     for DB in "${DATABASES[@]}"; do
-      kubectl --namespace "${CLUSTER_NAMESPACE}" patch "${CRD_NAME}" "${CLUSTER_NAME}" --type=merge \
+      kubectl --namespace "${CLUSTER_NAMESPACE}" patch postgresql "${CLUSTER_NAME}" --type=merge \
         --patch '{"spec":{"databases":{"'"${DB}"'":"'"${NAMESPACE}"'.'"${USERNAME}"'"}}}'
     done
 

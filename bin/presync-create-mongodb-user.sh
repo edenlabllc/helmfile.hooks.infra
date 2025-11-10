@@ -4,12 +4,11 @@ set -e
 
 NAMESPACE="${1}"
 RELEASE_NAME="${2}"
-CONTAINER_NAME="mongodb"
-
 USERNAME="${3}"
 PASSWORD="${4}"
 DATABASE="${5}"
 
+CONTAINER_NAME="mongodb"
 USER_PERMISSIONS="readWrite"
 
 function mongodb_exec() {
