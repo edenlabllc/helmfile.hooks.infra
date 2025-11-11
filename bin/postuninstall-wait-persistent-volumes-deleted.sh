@@ -3,23 +3,15 @@
 set -e
 
 NAMESPACE="${1}"
-ALL_ARGS=("${@}")
-LAST_ARG="${ALL_ARGS[-1]}"
+PVC_SELECTORS="${2}"
+LIMIT="${3:-120}"
 
-# Check if last argument is a number (LIMIT), if not use default
-if [[ "${LAST_ARG}" =~ ^[0-9]+$ ]]; then
-    LIMIT="${LAST_ARG}"
-    # Labels are all arguments except NAMESPACE (${1}) and LIMIT (last)
-    LABELS=("${ALL_ARGS[@]:1:$((${#ALL_ARGS[@]}-2))}")
-else
-    LIMIT="120"
-    # Labels are all arguments except NAMESPACE (${1})
-    LABELS=("${ALL_ARGS[@]:1}")
+if [[ -z "${PVC_SELECTORS}" ]]; then
+    echo "No label selector provided. Skipped."
+    exit 0
 fi
 
-# Convert array to comma-separated string for selector
-LABELS_STR="$(IFS=','; echo "${LABELS[*]}")"
-mapfile -t PVC_IDS < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${LABELS_STR}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
+mapfile -t PVC_IDS < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${PVC_SELECTORS}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
 
 for PVC_ID in "${PVC_IDS[@]}"; do
   COUNT=1
