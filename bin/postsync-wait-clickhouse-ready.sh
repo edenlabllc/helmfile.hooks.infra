@@ -17,12 +17,12 @@ function check_cr() {
     exit 1
   else
     echo
-    kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found
+    kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}"
     exit 0
   fi
 }
 
 COUNT=1
 while true; do
-  check_cr "$(kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --ignore-not-found --output yaml | yq ".status.status == \"Completed\"")"
+  check_cr "$(kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --output yaml | yq ".status.status == \"Completed\"")"
 done
