@@ -11,7 +11,12 @@ if [[ -z "${PVC_SELECTORS}" ]]; then
     exit 0
 fi
 
-mapfile -t PVC_IDS < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${PVC_SELECTORS}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
+PVC_IDS=()
+while IFS= read -r PVC_ID; do
+    if [[ -n "${PVC_ID}" ]]; then
+        PVC_IDS+=("${PVC_ID}")
+    fi
+done < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${PVC_SELECTORS}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
 
 for PVC_ID in "${PVC_IDS[@]}"; do
   COUNT=1
