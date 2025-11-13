@@ -2,14 +2,14 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-USERNAME="${3}"
-PASSWORD="${4}"
-DATABASE="${5}"
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly USERNAME="${3}"
+readonly PASSWORD="${4}"
+readonly DATABASE="${5}"
 
-CONTAINER_NAME="mongodb"
-USER_PERMISSIONS="readWrite"
+readonly CONTAINER_NAME="mongodb"
+readonly USER_PERMISSIONS="readWrite"
 
 function mongodb_exec() {
   kubectl --namespace "${NAMESPACE}" exec --stdin "${RELEASE_NAME}-0" --container "${CONTAINER_NAME}" -- bash -c "${1}"

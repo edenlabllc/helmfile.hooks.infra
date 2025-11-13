@@ -2,11 +2,11 @@
 
 set -e
 
-NAMESPACE="${1}"
-CURRENT_ENVIRONMENT="${2}"
-EXPECTED_ENVIRONMENT="${3}"
-RESOURCE_TYPE="${4}"
-RESOURCE_NAME_OR_PREFIX="${5}"
+readonly NAMESPACE="${1}"
+readonly CURRENT_ENVIRONMENT="${2}"
+readonly EXPECTED_ENVIRONMENT="${3}"
+readonly RESOURCE_TYPE="${4}"
+readonly RESOURCE_NAME_OR_PREFIX="${5}"
 # get rest of arguments
 LABELS=("${@}")
 LABELS="${LABELS[@]:5}"

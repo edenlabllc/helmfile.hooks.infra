@@ -2,12 +2,12 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-LIMIT="${3:-180}"
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly LIMIT="${3:-180}"
 
 # higher sleep is needed to wait till the operator starts updating the resources
-SLEEP=5
+readonly SLEEP=5
 
 # kafka status conditions might also be of type=Warning && status=True which is acceptable as well, e.g.:
 # status:
@@ -44,7 +44,7 @@ SLEEP=5
 #   readyPods: 3
 #
 # kafkanodepool is not checked for "replicas"
-GO_TEMPLATE='
+readonly GO_TEMPLATE='
   {{- range .items }}
     {{- if not .status }}0{{- end }}
     {{- with .status.conditions }}
@@ -69,14 +69,14 @@ GO_TEMPLATE='
 sleep ${SLEEP}
 
 COUNT=1
-RESOURCES="deployment,kafka,kafkanodepool,statefulset,strimzipodset"
+readonly RESOURCES="deployment,kafka,kafkanodepool,statefulset,strimzipodset"
 while true; do
   STATUS="$(kubectl --namespace "${NAMESPACE}" get "${RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep "${SLEEP}"
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >&2 echo "Limit exceeded."
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     echo

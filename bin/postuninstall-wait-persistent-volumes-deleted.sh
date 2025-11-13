@@ -2,9 +2,9 @@
 
 set -e
 
-NAMESPACE="${1}"
-PVC_SELECTORS="${2}"
-LIMIT="${3:-120}"
+readonly NAMESPACE="${1}"
+readonly PVC_SELECTORS="${2}"
+readonly LIMIT="${3:-120}"
 
 if [[ -z "${PVC_SELECTORS}" ]]; then
   echo "No label selector provided. Skipped."
@@ -22,7 +22,7 @@ for PVC_ID in "${PVC_IDS[@]}"; do
   COUNT=1
   while (kubectl get persistentvolume "${PVC_ID}" &> /dev/null); do
     if (( COUNT > LIMIT )); then
-      >&2 echo "Limit exceeded."
+      >&2 echo "$(basename "${0}"): Wait timeout exceeded."
       exit 1
     fi
 

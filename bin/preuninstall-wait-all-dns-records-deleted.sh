@@ -2,7 +2,7 @@
 
 set -e
 
-LIMIT="${1:-30}"
+readonly LIMIT="${1:-30}"
 
 echo "Waiting for ${LIMIT} seconds..."
 sleep "${LIMIT}"

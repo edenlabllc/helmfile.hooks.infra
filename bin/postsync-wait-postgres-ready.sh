@@ -2,10 +2,10 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-PATCH_PGHOST_VAR="${3:-false}"
-LIMIT="${4:-600}"
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly PATCH_PGHOST_VAR="${3:-false}"
+readonly LIMIT="${4:-600}"
 
 COUNT=1
 
@@ -59,7 +59,7 @@ while true; do
   elif [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >&2 echo "Limit exceeded."
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     kubectl --namespace "${NAMESPACE}" get postgresql "${RELEASE_NAME}"

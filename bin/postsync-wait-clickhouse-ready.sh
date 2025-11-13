@@ -2,9 +2,9 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-LIMIT="${3:-180}"
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly LIMIT="${3:-180}"
 
 function check_cr() {
   local OUTPUT="${1}"
@@ -13,7 +13,7 @@ function check_cr() {
     sleep 1
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >&2 echo "Limit exceeded."
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     echo

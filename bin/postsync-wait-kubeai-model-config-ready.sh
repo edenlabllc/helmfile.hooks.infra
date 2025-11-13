@@ -2,11 +2,11 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-LIMIT="${3:-10800}" # 3 hours (max time to load an AI model)
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly LIMIT="${3:-10800}" # 3 hours (max time to load an AI model)
 
-GO_TEMPLATE='
+readonly GO_TEMPLATE='
   {{- range .items }}
     {{- if not .status }}0{{- end }}
     {{- with .status }}
@@ -25,7 +25,7 @@ while true; do
     sleep 1
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >&2 echo "Limit exceeded."
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     echo

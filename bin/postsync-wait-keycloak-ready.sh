@@ -2,16 +2,17 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-STATUS_TYPE="${3:-Ready}"
-KEYCLOAK_RESOURCE="${4:-keycloak}"
-LIMIT="${5:-180}"
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly STATUS_TYPE="${3:-Ready}"
+readonly LIMIT="${5:-180}"
 
+KEYCLOAK_RESOURCE="${4:-keycloak}"
 [[ "${STATUS_TYPE}" == "Done" ]] && KEYCLOAK_RESOURCE="keycloakrealmimport"
+readonly KEYCLOAK_RESOURCE
 
 # for keycloak cluster
-GO_TEMPLATE='
+readonly GO_TEMPLATE='
   {{- range .items }}
     {{- if not .status }}0{{- end }}
     {{- if not .status.conditions}}0{{- end }}
@@ -33,7 +34,7 @@ while true; do
     sleep 1
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >&2 echo "Limit exceeded."
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     echo

@@ -2,9 +2,9 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-LIMIT="${3:-240}"
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly LIMIT="${3:-240}"
 
 COUNT=1
 
@@ -14,7 +14,7 @@ while true; do
     sleep 1
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >&2 echo "Limit exceeded."
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     kubectl --namespace "${NAMESPACE}" get elasticsearch "${RELEASE_NAME}"

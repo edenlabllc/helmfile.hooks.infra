@@ -2,13 +2,13 @@
 
 set -e
 
-NAMESPACE="${1}"
-RELEASE_NAME="${2}"
-LIMIT="${3:-180}"
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly LIMIT="${3:-180}"
 
 # for kafkaconnector also check connector and tasks' states in .status.connectorStatus
 # for kafkamirrormaker2 also check connectors' and tasks' states in .status.connectors
-GO_TEMPLATE='
+readonly GO_TEMPLATE='
   {{- range .items }}
     {{- if not .status }}0{{- end }}
     {{- range .status.conditions }}
@@ -33,14 +33,14 @@ GO_TEMPLATE='
 '
 
 COUNT=1
-RESOURCES="kafkaconnect,kafkaconnector,kafkamirrormaker2,kafkatopic"
+readonly RESOURCES="kafkaconnect,kafkaconnector,kafkamirrormaker2,kafkatopic"
 while true; do
   STATUS="$(kubectl --namespace "${NAMESPACE}" get "${RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
   if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
     sleep 1
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
-    >&2 echo "Limit exceeded."
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     echo

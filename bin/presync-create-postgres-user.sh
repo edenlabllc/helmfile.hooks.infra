@@ -2,12 +2,12 @@
 
 set -e
 
-NAMESPACE="${1}"
-CLUSTER_NAME="${2}"
-CLUSTER_NAMESPACE="${3}"
-USERNAME="${4}"
-DATABASES=("${5}")
-ENABLE_DEFAULT_USERS="${6:-false}"
+readonly NAMESPACE="${1}"
+readonly CLUSTER_NAME="${2}"
+readonly CLUSTER_NAMESPACE="${3}"
+readonly USERNAME="${4}"
+readonly DATABASES=("${5}")
+readonly ENABLE_DEFAULT_USERS="${6:-false}"
 
 function create_default_user() {
   for DB in "${DATABASES[@]}"; do
