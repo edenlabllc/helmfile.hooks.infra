@@ -10,6 +10,7 @@ readonly DATABASES=("${5}")
 readonly ENABLE_DEFAULT_USERS="${6:-false}"
 
 function create_default_user() {
+  local DB
   for DB in "${DATABASES[@]}"; do
     local DEFAULT_OWNER_USER="${DB}_owner_user"
     local SECRET_PREFIX="${DEFAULT_OWNER_USER//_/-}.${CLUSTER_NAME}"
@@ -36,6 +37,7 @@ function create_custom_user() {
     kubectl --namespace "${CLUSTER_NAMESPACE}" patch postgresql "${CLUSTER_NAME}" --type=merge \
       --patch '{"spec":{"users":{"'"${NAMESPACE}"'.'"${USERNAME}"'":["createdb"]}}}'
 
+    local DB
     for DB in "${DATABASES[@]}"; do
       kubectl --namespace "${CLUSTER_NAMESPACE}" patch postgresql "${CLUSTER_NAME}" --type=merge \
         --patch '{"spec":{"databases":{"'"${DB}"'":"'"${NAMESPACE}"'.'"${USERNAME}"'"}}}'

@@ -54,7 +54,7 @@ function check_inventory() {
     return 1
   fi
 
-  COUNT_RELEASES="$(yq '.releases | length' "${INVENTORY_FILE}")"
+  local COUNT_RELEASES="$(yq '.releases | length' "${INVENTORY_FILE}")"
   if (( COUNT_RELEASES == 0 )); then
     >&2 echo "ERROR: the inventory file does not contain the listed releases."
     return 1
@@ -63,7 +63,7 @@ function check_inventory() {
 
 function check_inventory_release_resource() {
   check_inventory
-  COUNT_RESOURCES="$(yq '.releases.'"${RELEASE_NAME}"' | length' "${INVENTORY_FILE}")"
+  local COUNT_RESOURCES="$(yq '.releases.'"${RELEASE_NAME}"' | length' "${INVENTORY_FILE}")"
   if (( COUNT_RESOURCES == 0 )); then
     >&2 echo "ERROR: the inventory file does not contain the listed resources for selected release ${RELEASE_NAME}."
     return 1
