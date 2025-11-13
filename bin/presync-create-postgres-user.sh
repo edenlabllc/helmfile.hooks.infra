@@ -24,6 +24,7 @@ function create_default_user() {
     fi
   done
 
+  # wait till postgresql CR really updated
   sleep 5
 }
 

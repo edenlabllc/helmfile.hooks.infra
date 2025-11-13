@@ -7,15 +7,15 @@ PVC_SELECTORS="${2}"
 LIMIT="${3:-120}"
 
 if [[ -z "${PVC_SELECTORS}" ]]; then
-    echo "No label selector provided. Skipped."
-    exit 0
+  echo "No label selector provided. Skipped."
+  exit 0
 fi
 
 PVC_IDS=()
 while IFS= read -r PVC_ID; do
-    if [[ -n "${PVC_ID}" ]]; then
-        PVC_IDS+=("${PVC_ID}")
-    fi
+  if [[ -n "${PVC_ID}" ]]; then
+    PVC_IDS+=("${PVC_ID}")
+  fi
 done < <(kubectl --namespace "${NAMESPACE}" get persistentvolumeclaim --selector "${PVC_SELECTORS}" --output yaml | yq --unwrapScalar '.items[].spec.volumeName')
 
 for PVC_ID in "${PVC_IDS[@]}"; do
