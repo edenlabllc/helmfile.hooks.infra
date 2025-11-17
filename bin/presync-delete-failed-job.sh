@@ -3,20 +3,20 @@
 set -e
 
 readonly NAMESPACE="${1}"
-readonly JOB_PREFIX="${2}"
+readonly RELEASE_NAME="${2}"
 
-# Get all job names matching prefix
+# Get all job names matching name prefix
 readonly JOB_NAMES="$(
   kubectl --namespace "${NAMESPACE}" get job --output yaml \
     | yq --unwrapScalar '
         .items[]
-        | select(.metadata.name | startswith("'"${JOB_PREFIX}"'-"))
+        | select(.metadata.name | startswith("'"${RELEASE_NAME}"'-"))
         | .metadata.name
       '
 )"
 
 if [[ -z "${JOB_NAMES}" ]]; then
-  echo "No jobs with prefix \"${JOB_PREFIX}-\" found in namespace ${NAMESPACE}. Skipped."
+  echo "No jobs with name prefix \"${RELEASE_NAME}-\" found in namespace ${NAMESPACE}. Skipped."
   exit 0
 fi
 

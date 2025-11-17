@@ -3,12 +3,13 @@
 set -e
 
 # One-time copy of a Secret. Creates DST only if it doesn't exist.
-# Usage: ./postsync-copy-secret-once.sh <SRC_NAMESPACE> <SRC_SECRET> <DST_NAMESPACE> <DST_SECRET>
+# Usage: ./postsync-copy-secret-once.sh <SRC_NAMESPACE> <SRC_SECRET_NAME> <DST_NAMESPACE> <DST_SECRET_NAME>
 
 readonly SRC_NAMESPACE="${1}"
 readonly SRC_SECRET_NAME="${2}"
 readonly DST_NAMESPACE="${3}"
 readonly DST_SECRET_NAME="${4}"
+
 export DST_NAMESPACE
 export DST_SECRET_NAME
 
