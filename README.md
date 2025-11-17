@@ -13,14 +13,11 @@ Mainly it is designed to be managed by administrators, DevOps engineers, SREs.
 * [Git workflow](#git-workflow)
 * [Additional information](#additional-information)
 * [Development](#development)
-* [Upgrading EKS cluster](#upgrading-eks-cluster)
-  * [General EKS upgrade instructions](#general-eks-upgrade-instructions)
-  * [Overview of EKS upgrade scripts](#overview-of-eks-upgrade-scripts)
-    * [Upgrading to EKS 1.27](#upgrading-to-eks-127)
+  * [Guidelines](#guidelines)
 
 ## Requirements
 
-`helm`, `kubectl`, `jq`, `yq` = version are specified in the [project.yaml](https://github.com/edenlabllc/rmk/blob/develop/docs/configuration/project-management/preparation-of-project-repository.md#projectyaml) file
+`helm`, `kubectl`, `yq` = version are specified in the [project.yaml](https://github.com/edenlabllc/rmk/blob/develop/docs/configuration/project-management/preparation-of-project-repository.md#projectyaml) file
 of each project of the repository in the `tools` section.
 
 ## Git workflow
@@ -63,3 +60,189 @@ Each merge into the master branch adds a new [SemVer2](https://semver.org/) tag 
 For development, navigate to the local `.PROJECT/inventory/hooks/helmfile.hooks.infra-<version>/bin` directory of a project repository, 
 then perform the changes directly in the files and test them. Finally, copy the changed files to a new feature branch 
 of this repository and create a pull request (PR).
+
+### Guidelines
+
+This section defines the standards and best practices for developing hook scripts in this repository. All scripts must adhere to these guidelines to ensure consistency, maintainability, and reliability.
+
+#### Script Structure
+
+1. **Shebang and Error Handling**
+   - Line 1: Must contain `#!/usr/bin/env bash`
+   - Line 2: Must be blank
+   - Line 3: Must contain `set -e` to exit immediately if a command exits with a non-zero status
+   - No duplicate `set -e` statements elsewhere in the script
+
+2. **Indentation**
+   - Use exactly 2 spaces for indentation throughout all bash code
+   - Do not use tabs
+
+#### Variable Declarations and Usage
+
+3. **Quoting Variables**
+   - All variable assignments must use quotes: `VAR="${value}"`
+   - All variable expansions must use quotes: `"${VAR}"`
+   - Command substitutions must be quoted: `VAR="$(command)"`
+   - Exception: Arithmetic expansion does not require quotes: `$(( EXPR ))` or `(( EXPR ))`
+
+4. **Variable Naming**
+   - Remove unnecessary prefixes: Do not use `K8S_`, `MONGODB_`, `PG_` prefixes
+   - Keep `HELM_` prefix when referring to Helm-specific variables
+   - Use descriptive, clear names without redundant prefixes
+
+5. **Readonly Variables**
+   - Declare variables as `readonly` if they are assigned once and never modified
+   - Apply `readonly` to initial argument assignments: `readonly NAMESPACE="${1}"`
+   - Apply `readonly` to constants and configuration values
+   - Default argument values are compatible with `readonly`: `readonly LIMIT="${3:-180}"`
+
+6. **Local Variables**
+   - Declare variables as `local` within functions to prevent global scope pollution
+   - Prefer combining `local` declaration with assignment: `local COUNT=0`
+   - All function-scoped variables must be declared as `local`
+
+#### Arithmetic Operations
+
+7. **Arithmetic Formatting**
+   - Use spaces around operators in arithmetic expressions: `(( COUNT > LIMIT ))`
+   - Use spaces around equality comparisons: `(( COUNT == 0 ))`
+   - Use spaces in arithmetic expansion: `$(( SA_DATE - POD_DATE ))`
+   - Increment operations: `(( ++COUNT ))` (pre-increment with spaces)
+   - Comparison operators: `(( COUNT <= LIMIT ))`, `(( COUNT >= LIMIT ))`
+
+#### Arrays
+
+8. **Array Usage**
+   - Iterate arrays using `"${ARRAY[@]}"`: `for ITEM in "${ARRAY[@]}"; do`
+   - Array slicing: `("${ARRAY[@]:start}")` to maintain array structure
+   - Creating arrays from command output: Use `while IFS= read -r` loop with here-document for POSIX compatibility:
+     ```bash
+     ARRAY=()
+     while IFS= read -r ITEM; do
+       if [[ -n "${ITEM}" ]]; then
+         ARRAY+=("${ITEM}")
+       fi
+     done <<EOF
+     ${COMMAND_OUTPUT}
+     EOF
+     ```
+   - Avoid `mapfile` for compatibility with older Bash versions or restricted shell environments
+
+#### Argument Order
+
+9. **Standard Argument Order**
+   - First argument: `NAMESPACE` (required, no default value)
+   - Second argument: `RELEASE_NAME` or `CLUSTER_NAME` (required, no default value)
+   - Subsequent arguments: Other parameters as needed
+   - Last argument: `LIMIT` (if present, must be the final positional argument)
+   - Boolean/enable flags should come last with default values: `ENABLE_HOOK="${4:-true}"`
+
+10. **Argument Naming**
+    - Use `RELEASE_NAME` for Helm release names
+    - Use `CLUSTER_NAME` only when referring to a Kubernetes cluster resource (e.g., PostgreSQL cluster)
+    - Use `CLUSTER_NAMESPACE` when the cluster resource exists in a different namespace
+
+#### Exit Codes
+
+11. **Exit Code Standards**
+    - Use `exit 0` for successful completion
+    - Use `exit 1` for errors and failures
+    - Ensure all code paths have explicit exit codes
+
+#### Error Messages
+
+12. **Error Message Format**
+    - Include script name in error messages: `$(basename "${0}"): Wait timeout exceeded.`
+    - Use descriptive error messages that explain what failed
+    - Send error messages to stderr: `>&2 echo "ERROR: message"`
+
+#### Control Flow
+
+13. **Loop Usage**
+    - Prefer `for` loops for counting iterations: `for (( COUNT=0; COUNT < LIMIT; ++COUNT )); do`
+    - Use `while true` loops for polling/waiting scenarios: `while true; do ... done`
+    - Convert counting `while` loops to `for` loops where appropriate
+
+#### CRD and Resource Names
+
+14. **Hardcoding Resource Types**
+    - Remove `CRD_NAME` arguments in favor of hardcoding common CRD names directly in `kubectl` commands
+    - Example: Use `kubectl get postgresql` instead of `kubectl get "${CRD_NAME}"`
+    - This simplifies script interfaces and reduces unnecessary abstraction
+
+#### Hook Naming Convention
+
+15. **Naming Pattern**
+    - Format: `<hook-type>-<action>-<resource>.sh`
+    - Hook types:
+      - `presync`: Execute before Helm sync operation
+      - `postsync`: Execute after Helm sync operation
+      - `preuninstall`: Execute before Helm uninstall operation
+      - `postuninstall`: Execute after Helm uninstall operation
+    - Action: Descriptive verb (e.g., `wait`, `create`, `delete`, `restart`, `annotate`, `label`)
+    - Resource: Target resource or purpose (e.g., `postgres-ready`, `dns-record-ready`, `failed-job`)
+    - Examples:
+      - `postsync-wait-postgres-ready.sh`
+      - `presync-create-postgres-user.sh`
+      - `postuninstall-wait-persistent-volumes-deleted.sh`
+
+#### Function Definitions
+
+16. **Function Best Practices**
+    - Use `function` keyword or `function_name()` syntax consistently
+    - Declare all function variables as `local`
+    - Use descriptive function names that indicate purpose
+    - Return explicit exit codes: `return 0` for success, `return 1` for failure
+
+#### Process Substitution
+
+17. **Process Substitution Compatibility**
+    - Use here-document with command substitution instead of process substitution (`< <(...)`) for better compatibility:
+      ```bash
+      OUTPUT="$(command)"
+      while IFS= read -r LINE; do
+        # process line
+      done <<EOF
+      ${OUTPUT}
+      EOF
+      ```
+    - This ensures compatibility with restricted shell environments
+
+#### Example Script Template
+
+```bash
+#!/usr/bin/env bash
+
+set -e
+
+readonly NAMESPACE="${1}"
+readonly RELEASE_NAME="${2}"
+readonly LIMIT="${3:-180}"
+
+function check_resource() {
+  local RESOURCE_NAME="${1}"
+  local STATUS
+  
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${RESOURCE_NAME}" "${RELEASE_NAME}" --output yaml | yq '.status.phase')"
+  
+  if [[ "${STATUS}" == "Ready" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+COUNT=1
+while true; do
+  if check_resource "deployment"; then
+    kubectl --namespace "${NAMESPACE}" get deployment "${RELEASE_NAME}"
+    exit 0
+  elif (( COUNT > LIMIT )); then
+    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
+    exit 1
+  else
+    sleep 1
+    (( ++COUNT ))
+  fi
+done
+```
