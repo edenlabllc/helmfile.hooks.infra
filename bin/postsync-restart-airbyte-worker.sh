@@ -22,8 +22,34 @@ if [[ "${MAX_DIFF_SECONDS}" == "0" ]]; then
   exit 1
 fi
 
+function get_os() {
+  local UNAME_OUT="$(uname -s)"
+  local MACHINE
+
+  case "${UNAME_OUT}" in
+    Linux*)
+      MACHINE="Linux"
+      ;;
+    Darwin*)
+      MACHINE="Mac"
+      ;;
+    *)
+      MACHINE="UNKNOWN:${UNAME_OUT}"
+      ;;
+  esac
+
+  echo "${MACHINE}"
+}
+
+readonly OS="$(get_os)"
+
+if [[ "${OS}" != "Linux" && "${OS}" != "Mac" ]]; then
+  >&2 echo "Not supported OS ${OS}. Supported: Mac|Linux"
+  exit 1
+fi
+
 readonly POD_SELECTORS="$(kubectl --namespace "${NAMESPACE}" get deployment "${RELEASE_NAME}-worker" --output yaml \
-  | yq --unwrapScalar '.spec.selector.matchLabels | to_entries | map("\(.key)=\(.value)") | join(",")')"
+  | yq --unwrapScalar '.spec.selector.matchLabels | to_entries | map(.key + "=" + .value) | join(",")')"
 
 readonly PODS_AIRBYTE_WORKERS="$(kubectl --namespace "${NAMESPACE}" get pod --selector="${POD_SELECTORS}" --output yaml \
   | yq --unwrapScalar '.items[] | select(.status.phase == "Running") | .metadata.name')"
@@ -65,6 +91,7 @@ if [[ "${ROLLOUT_PERFORMED}" == "true" ]]; then
           .items
           | map(select(.status.phase == "Running") | .metadata.creationTimestamp)
           | sort
+          | select(length > 0)
           | .[-1]
         '
   )"
@@ -76,8 +103,13 @@ if [[ "${ROLLOUT_PERFORMED}" == "true" && -n "${POD_CREATION_DATETIME}" ]]; then
     | yq --unwrapScalar '.metadata.creationTimestamp')"
 
   # convert timestamps to epoch seconds
-  readonly POD_CREATION_TIMESTAMP="$(echo "${POD_CREATION_DATETIME}" | yq --unwrapScalar 'fromdateiso8601')"
-  readonly SA_CREATION_TIMESTAMP="$(echo "${SA_CREATION_DATETIME}" | yq --unwrapScalar 'fromdateiso8601')"
+  if [[ "${OS}" == "Linux" ]]; then
+    readonly POD_CREATION_TIMESTAMP="$(date -d "$(echo "${POD_CREATION_DATETIME}" | sed 's/T/ /; s/Z//')" "+%s")"
+    readonly SA_CREATION_TIMESTAMP="$(date -d "$(echo "${SA_CREATION_DATETIME}" | sed 's/T/ /; s/Z//')" "+%s")"
+  elif [[ "${OS}" == "Mac" ]]; then
+    readonly POD_CREATION_TIMESTAMP="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${POD_CREATION_DATETIME}" "+%s")"
+    readonly SA_CREATION_TIMESTAMP="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${SA_CREATION_DATETIME}" "+%s")"
+  fi
 
   readonly DIFF_SECONDS=$(( SA_CREATION_TIMESTAMP - POD_CREATION_TIMESTAMP ))
   echo "Timestamp difference: ${DIFF_SECONDS} seconds."
