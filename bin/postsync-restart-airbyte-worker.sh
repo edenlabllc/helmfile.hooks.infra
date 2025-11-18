@@ -15,26 +15,55 @@ set -e
 
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
-readonly ALLOWED_TIME_SECONDS="${3:-60}"
+readonly MAX_DIFF_SECONDS="${3:-60}"
 
-if [[ -z "${ALLOWED_TIME_SECONDS}" || "${ALLOWED_TIME_SECONDS}" == "0" ]] ; then
-  >&2 echo "ALLOWED_TIME_SEC must be more than 0"
+if [[ "${MAX_DIFF_SECONDS}" == "0" ]]; then
+  >&2 echo "MAX_DIFF_SECONDS must be more than 0."
+  exit 1
+fi
+
+function get_os() {
+  local UNAME_OUT="$(uname -s)"
+  local MACHINE
+
+  case "${UNAME_OUT}" in
+    Linux*)
+      MACHINE="Linux"
+      ;;
+    Darwin*)
+      MACHINE="Mac"
+      ;;
+    *)
+      MACHINE="UNKNOWN:${UNAME_OUT}"
+      ;;
+  esac
+
+  echo "${MACHINE}"
+}
+
+readonly OS="$(get_os)"
+
+if [[ "${OS}" != "Linux" && "${OS}" != "Mac" ]]; then
+  >&2 echo "Not supported OS ${OS}. Supported: Mac|Linux"
   exit 1
 fi
 
 readonly POD_SELECTORS="$(kubectl --namespace "${NAMESPACE}" get deployment "${RELEASE_NAME}-worker" --output yaml \
-  | yq --unwrapScalar '.spec.selector.matchLabels | to_entries | map("\(.key)=\(.value)") | join(",")')"
+  | yq --unwrapScalar '.spec.selector.matchLabels | to_entries | map(.key + "=" + .value) | join(",")')"
 
 readonly PODS_AIRBYTE_WORKERS="$(kubectl --namespace "${NAMESPACE}" get pod --selector="${POD_SELECTORS}" --output yaml \
   | yq --unwrapScalar '.items[] | select(.status.phase == "Running") | .metadata.name')"
 
-# track if rollout was performed (i.e., if any worker pod crashed)
-HAS_ROLLOUT="true"
+# track if rollout was performed (no failed events means rollout happened)
+ROLLOUT_PERFORMED="true"
 
 # load all events once to avoid repeated kubectl calls
 readonly EVENTS_YAML="$(kubectl --namespace "${NAMESPACE}" get event --output yaml)"
+while IFS= read -r POD_NAME; do
+  if [[ -z "${POD_NAME}" ]]; then
+    continue
+  fi
 
-for POD_NAME in ${PODS_AIRBYTE_WORKERS}; do
   POD_EVENTS="$(echo "${EVENTS_YAML}" \
     | yq --unwrapScalar '
         .items[]
@@ -47,40 +76,54 @@ for POD_NAME in ${PODS_AIRBYTE_WORKERS}; do
 
   # if any worker pod contains Failed events — rollout was NOT performed
   if [[ -n "${POD_EVENTS}" ]]; then
-    HAS_ROLLOUT="false"
+    ROLLOUT_PERFORMED="false"
     break
   fi
-done
+done <<EOF
+${PODS_AIRBYTE_WORKERS}
+EOF
 
 # find newest running pod timestamp (latest restart moment)
-if [[ "${HAS_ROLLOUT}" == "true" ]]; then
-  readonly POD_CREATION_TIMESTAMP="$(
+if [[ "${ROLLOUT_PERFORMED}" == "true" ]]; then
+  readonly POD_CREATION_DATETIME="$(
     kubectl --namespace "${NAMESPACE}" get pod --selector="${POD_SELECTORS}" --output yaml \
       | yq --unwrapScalar '
           .items
           | map(select(.status.phase == "Running") | .metadata.creationTimestamp)
           | sort
+          | select(length > 0)
           | .[-1]
         '
   )"
 fi
 
-if [[ "${HAS_ROLLOUT}" == "true" && -n "${POD_CREATION_TIMESTAMP}" ]]; then
+if [[ "${ROLLOUT_PERFORMED}" == "true" && -n "${POD_CREATION_DATETIME}" ]]; then
   # get SA creation timestamp (it always gets recreated by the chart)
-  readonly SA_CREATION_TIMESTAMP="$(kubectl --namespace "${NAMESPACE}" get serviceaccount "${RELEASE_NAME}-admin" --output yaml \
+  readonly SA_CREATION_DATETIME="$(kubectl --namespace "${NAMESPACE}" get serviceaccount "${RELEASE_NAME}-admin" --output yaml \
     | yq --unwrapScalar '.metadata.creationTimestamp')"
 
   # convert timestamps to epoch seconds
-  readonly POD_DATE="$(echo "${POD_CREATION_TIMESTAMP}" | yq --unwrapScalar 'fromdateiso8601')"
-  readonly SA_DATE="$(echo "${SA_CREATION_TIMESTAMP}" | yq --unwrapScalar 'fromdateiso8601')"
+  if [[ "${OS}" == "Linux" ]]; then
+    readonly POD_CREATION_TIMESTAMP="$(date -d "$(echo "${POD_CREATION_DATETIME}" | sed 's/T/ /; s/Z//')" "+%s")"
+    readonly SA_CREATION_TIMESTAMP="$(date -d "$(echo "${SA_CREATION_DATETIME}" | sed 's/T/ /; s/Z//')" "+%s")"
+  elif [[ "${OS}" == "Mac" ]]; then
+    readonly POD_CREATION_TIMESTAMP="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${POD_CREATION_DATETIME}" "+%s")"
+    readonly SA_CREATION_TIMESTAMP="$(date -jf "%Y-%m-%dT%H:%M:%SZ" "${SA_CREATION_DATETIME}" "+%s")"
+  fi
 
-  readonly DIFF_SECONDS=$(( SA_DATE - POD_DATE ))
-  echo "Timestamp difference: ${DIFF_SECONDS} seconds"
+  readonly DIFF_SECONDS=$(( SA_CREATION_TIMESTAMP - POD_CREATION_TIMESTAMP ))
+  echo "Timestamp difference: ${DIFF_SECONDS} seconds."
 
   # if worker pod started BEFORE the new ServiceAccount → force restart
-  if (( DIFF_SECONDS > ALLOWED_TIME_SECONDS )); then
+  if (( DIFF_SECONDS > MAX_DIFF_SECONDS )); then
     echo "Forcing rolling update of ${RELEASE_NAME}-worker..."
     kubectl --namespace "${NAMESPACE}" rollout restart deployment "${RELEASE_NAME}-worker"
     kubectl --namespace "${NAMESPACE}" rollout status deployment "${RELEASE_NAME}-worker"
+  else
+    if (( DIFF_SECONDS < 0 )); then
+      echo "No restart needed: Pod was created after ServiceAccount (pod is newer, already using correct SA). Skipped."
+    else
+      echo "No restart needed: Pod was created within ${MAX_DIFF_SECONDS} seconds after ServiceAccount (likely using correct SA). Skipped."
+    fi
   fi
 fi
