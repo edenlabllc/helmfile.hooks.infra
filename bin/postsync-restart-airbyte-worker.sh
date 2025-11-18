@@ -119,5 +119,11 @@ if [[ "${ROLLOUT_PERFORMED}" == "true" && -n "${POD_CREATION_DATETIME}" ]]; then
     echo "Forcing rolling update of ${RELEASE_NAME}-worker..."
     kubectl --namespace "${NAMESPACE}" rollout restart deployment "${RELEASE_NAME}-worker"
     kubectl --namespace "${NAMESPACE}" rollout status deployment "${RELEASE_NAME}-worker"
+  else
+    if (( DIFF_SECONDS < 0 )); then
+      echo "No restart needed: Pod was created after ServiceAccount (pod is newer, already using correct SA). Skipped."
+    else
+      echo "No restart needed: Pod was created within ${MAX_DIFF_SECONDS} seconds after ServiceAccount (likely using correct SA). Skipped."
+    fi
   fi
 fi
