@@ -86,8 +86,7 @@ This section defines the standards and best practices for developing hook script
    - Exception: Arithmetic expansion does not require quotes: `$(( EXPR ))` or `(( EXPR ))`
 
 4. **Variable Naming**
-   - Remove unnecessary prefixes: Do not use `K8S_`, `MONGODB_`, `PG_` prefixes
-   - Keep `HELM_` prefix when referring to Helm-specific variables
+   - Avoid unnecessary prefixes (e.g., `K8S_`, `MONGODB_`, `PG_`)
    - Use descriptive, clear names without redundant prefixes
 
 5. **Readonly Variables**
@@ -128,6 +127,15 @@ This section defines the standards and best practices for developing hook script
      ```
    - Avoid `mapfile` for compatibility with older Bash versions or restricted shell environments
 
+#### Tool Preferences
+
+9. **YAML/JSON Processing**
+   - Prefer `yq` for most YAML/JSON processing tasks
+   - Exception: Golang templates (`go-template`) are currently used in some ready hooks, but may be migrated to `yq` in the future for unification
+   - Avoid low-level Linux utilities (`sed`, `awk`, `grep`) unless:
+     - The output is plain text (not YAML/JSON)
+     - `yq` cannot handle the specific use case
+
 #### Argument Order
 
 9. **Standard Argument Order**
@@ -135,7 +143,7 @@ This section defines the standards and best practices for developing hook script
    - Second argument: `RELEASE_NAME` or `CLUSTER_NAME` (required, no default value)
    - Subsequent arguments: Other parameters as needed
    - Last argument: `LIMIT` (if present, must be the final positional argument)
-   - Boolean/enable flags should come last with default values: `ENABLE_HOOK="${4:-true}"`
+   - Boolean/enable flags (if present) should come last with default values: `ENABLE_HOOK="${4:-true}"`
 
 10. **Argument Naming**
     - Use `RELEASE_NAME` for Helm release names
@@ -144,46 +152,41 @@ This section defines the standards and best practices for developing hook script
 
 #### Exit Codes
 
-11. **Exit Code Standards**
+12. **Exit Code Standards**
     - Use `exit 0` for successful completion
     - Use `exit 1` for errors and failures
     - Ensure all code paths have explicit exit codes
 
 #### Error Messages
 
-12. **Error Message Format**
+13. **Error Message Format**
     - Include script name in error messages: `$(basename "${0}"): Wait timeout exceeded.`
     - Use descriptive error messages that explain what failed
     - Send error messages to stderr: `>&2 echo "ERROR: message"`
 
 #### Control Flow
 
-13. **Loop Usage**
+14. **Loop Usage**
     - Prefer `for` loops for counting iterations: `for (( COUNT=0; COUNT < LIMIT; ++COUNT )); do`
     - Use `while true` loops for polling/waiting scenarios: `while true; do ... done`
     - Convert counting `while` loops to `for` loops where appropriate
 
-#### CRD and Resource Names
-
-14. **Hardcoding Resource Types**
-    - Remove `CRD_NAME` arguments in favor of hardcoding common CRD names directly in `kubectl` commands
-    - Example: Use `kubectl get postgresql` instead of `kubectl get "${CRD_NAME}"`
-    - This simplifies script interfaces and reduces unnecessary abstraction
-
 #### Hook Naming Convention
 
 15. **Naming Pattern**
-    - Format: `<hook-type>-<action>-<resource>.sh`
-    - Hook types:
+    - Format: `<event>-<action>.sh` or `<event>-<event>-<action>.sh` for multiple events
+    - Supported events (for the full list, see [Helmfile hooks documentation](https://helmfile.readthedocs.io/en/latest/#hooks)):
       - `presync`: Execute before Helm sync operation
       - `postsync`: Execute after Helm sync operation
       - `preuninstall`: Execute before Helm uninstall operation
       - `postuninstall`: Execute after Helm uninstall operation
-    - Action: Descriptive verb (e.g., `wait`, `create`, `delete`, `restart`, `annotate`, `label`)
-    - Resource: Target resource or purpose (e.g., `postgres-ready`, `dns-record-ready`, `failed-job`)
+    - Multiple events: When a hook is used for multiple events, list them explicitly following the order above: `<event1>-<event2>-<action>.sh` (e.g., `preuninstall-postuninstall-delete-cluster.sh`)
+    - Action: Descriptive verb optionally followed by resource or purpose (e.g., `wait-postgres-ready`, `create-postgres-user`, `delete-failed-job`, `restart-airbyte-worker`)
+    - Backward compatibility: If a new event is needed for an existing hook, create a new hook file to maintain backward compatibility
     - Examples:
-      - `postsync-wait-postgres-ready.sh`
       - `presync-create-postgres-user.sh`
+      - `postsync-wait-postgres-ready.sh`
+      - `preuninstall-postuninstall-delete-cluster.sh`
       - `postuninstall-wait-persistent-volumes-deleted.sh`
 
 #### Function Definitions
@@ -207,42 +210,3 @@ This section defines the standards and best practices for developing hook script
       EOF
       ```
     - This ensures compatibility with restricted shell environments
-
-#### Example Script Template
-
-```bash
-#!/usr/bin/env bash
-
-set -e
-
-readonly NAMESPACE="${1}"
-readonly RELEASE_NAME="${2}"
-readonly LIMIT="${3:-180}"
-
-function check_resource() {
-  local RESOURCE_NAME="${1}"
-  local STATUS
-  
-  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${RESOURCE_NAME}" "${RELEASE_NAME}" --output yaml | yq '.status.phase')"
-  
-  if [[ "${STATUS}" == "Ready" ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-COUNT=1
-while true; do
-  if check_resource "deployment"; then
-    kubectl --namespace "${NAMESPACE}" get deployment "${RELEASE_NAME}"
-    exit 0
-  elif (( COUNT > LIMIT )); then
-    >&2 echo "$(basename "${0}"): Wait timeout exceeded."
-    exit 1
-  else
-    sleep 1
-    (( ++COUNT ))
-  fi
-done
-```
