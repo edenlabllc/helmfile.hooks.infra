@@ -4,7 +4,7 @@
 [![Software License](https://img.shields.io/github/license/edenlabllc/helmfile.hooks.infra.svg?style=for-the-badge)](LICENSE)
 [![Powered By: Edenlab](https://img.shields.io/badge/powered%20by-edenlab-8A2BE2.svg?style=for-the-badge)](https://edenlab.io)
 
-This repository provides shell scripts for the [Helmfile hooks](https://helmfile.readthedocs.io/en/latest/#hooks). 
+This repository provides shell scripts for the [Helmfile hooks](https://helmfile.readthedocs.io/en/latest/#hooks).
 Mainly it is designed to be managed by administrators, DevOps engineers, SREs.
 
 ## Contents
@@ -13,19 +13,19 @@ Mainly it is designed to be managed by administrators, DevOps engineers, SREs.
 * [Git workflow](#git-workflow)
 * [Additional information](#additional-information)
 * [Development](#development)
-* [Upgrading EKS cluster](#upgrading-eks-cluster)
-  * [General EKS upgrade instructions](#general-eks-upgrade-instructions)
-  * [Overview of EKS upgrade scripts](#overview-of-eks-upgrade-scripts)
-    * [Upgrading to EKS 1.27](#upgrading-to-eks-127)
+    * [Guidelines](#guidelines)
 
 ## Requirements
 
-`helm`, `kubectl`, `jq`, `yq` = version are specified in the [project.yaml](https://github.com/edenlabllc/rmk/blob/develop/docs/configuration/project-management/preparation-of-project-repository.md#projectyaml) file
+`helm`, `kubectl`, `yq` = version are specified in
+the [project.yaml](https://github.com/edenlabllc/rmk/blob/develop/docs/configuration/project-management/preparation-of-project-repository.md#projectyaml)
+file
 of each project of the repository in the `tools` section.
 
 ## Git workflow
 
-This repository uses the classic [GitFlow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) workflow,
+This repository uses the classic [GitFlow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
+workflow,
 embracing all its advantages and disadvantages.
 
 **Stable branches:** develop, master
@@ -34,15 +34,20 @@ Each merge into the master branch adds a new [SemVer2](https://semver.org/) tag 
 
 ## Additional information
 
-* This set of hook scripts can only be launched from the project repository via [RMK](https://github.com/edenlabllc/rmk), 
-  because the entire input set of the variables is formed by [RMK](https://github.com/edenlabllc/rmk) at the moment the release commands are launched, e.g.:
-  
+* This set of hook scripts can only be launched from the project repository
+  via [RMK](https://github.com/edenlabllc/rmk),
+  because the entire input set of the variables is formed by [RMK](https://github.com/edenlabllc/rmk) at the moment the
+  release commands are launched, e.g.:
+
   ```shell
   rmk release sync
   ```
-  
-  [RMK](https://github.com/edenlabllc/rmk) also keeps track of which version of the release hook scripts the project repository will use. 
-  The version of the hook scripts artifact is described in the [project.yaml](https://github.com/edenlabllc/rmk/blob/develop/docs/configuration/project-management/preparation-of-project-repository.md#projectyaml) file 
+
+  [RMK](https://github.com/edenlabllc/rmk) also keeps track of which version of the release hook scripts the project
+  repository will use.
+  The version of the hook scripts artifact is described in
+  the [project.yaml](https://github.com/edenlabllc/rmk/blob/develop/docs/configuration/project-management/preparation-of-project-repository.md#projectyaml)
+  file
   of each project repository in the `inventory.hooks` section, e.g.:
 
    ```yaml
@@ -54,136 +59,169 @@ Each merge into the master branch adds a new [SemVer2](https://semver.org/) tag 
          url: git::https://github.com/edenlabllc/{{.Name}}.git?ref={{.Version}}
      # ...
    ```
-* The hook scripts are designed to ensure consistent deployment of Helm releases described in a Helmfile. 
-  These scripts should be designed with declarative deployment in mind. 
+* The hook scripts are designed to ensure consistent deployment of Helm releases described in a Helmfile.
+  These scripts should be designed with declarative deployment in mind.
   They will only execute when there are differences in the state.
 
 ## Development
 
-For development, navigate to the local `.PROJECT/inventory/hooks/helmfile.hooks.infra-<version>/bin` directory of a project repository, 
-then perform the changes directly in the files and test them. Finally, copy the changed files to a new feature branch 
+For development, navigate to the local `.PROJECT/inventory/hooks/helmfile.hooks.infra-<version>/bin` directory of a
+project repository,
+then perform the changes directly in the files and test them. Finally, copy the changed files to a new feature branch
 of this repository and create a pull request (PR).
 
-## Upgrading EKS cluster
+### Guidelines
 
-### General EKS upgrade instructions
+This section defines the standards and best practices for developing hook scripts in this repository. All scripts must
+adhere to these guidelines to ensure consistency, maintainability, and reliability.
 
-The list of official [EKS](https://aws.amazon.com/eks/) upgrade instructions is
-https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html
+#### Script Structure
 
-> Only self-managed [EKS addons](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html) are used. This means that we install all the AWS-related releases via `Helmfile` like any other release.
+1. **Shebang and Error Handling**
+    - Line 1: Must contain `#!/usr/bin/env bash`
+    - Line 2: Must be blank
+    - Line 3: Must contain `set -e` to exit immediately if a command exits with a non-zero status
+    - No duplicate `set -e` statements elsewhere in the script
 
-In general, the steps are the following (should be executed in the specified order):
+2. **Indentation**
+    - Use exactly 2 spaces for indentation throughout all bash code
+    - Do not use tabs
 
-1. Make the needed changes to the project repository:
-   - Upgrade components in [project.yaml](https://github.com/edenlabllc/rmk/blob/develop/docs/configuration/project-management/preparation-of-project-repository.md#projectyaml).
-   - Investigate recent changes in case a chart was upgraded, adjust the release values so a new chart is synced correctly.
-     > This might be required in case of any incompatibilities between a release and K8S versions.
-   - If required, enable/disable releases in `etc/<scope>/<environment>/releases.yaml`.
-   - Run `rmk secret manager generate` and `rmk secret manager encode` to generate new secrets by a template.
-     > Environments variables might be required by the `generate` command.
-   - Resolve recommended [AMI](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) ID and set in `etc/clusters/aws/<environment>/values/worker-groups.auto.tfvars`.
-     > Each K8S version has it own recommended AMI image, see the instructions: https://docs.aws.amazon.com/eks/latest/userguide/retrieve-ami-id.html
-   - Set the desired K8S version in `k8s_cluster_version` in `etc/clusters/aws/<environment>/values/variables.auto.tfvars`.
-2. Resolve recommended `kube-proxy`, `coredns` versions and set it in `upgrade-nodes.sh`.
-   > See the following instructions: \
-   > https://docs.aws.amazon.com/eks/latest/userguide/managing-kube-proxy.html \
-   > https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html#coredns-add-on-self-managed-update
-3. Sync helm releases for all scopes: `upgrade-releases.sh`
-   > In general, the script will only contain `rmk release sync`. However, a more complex set might be included.
-4. Upgrade the K8S control plane and the system components (1 K8S version will be upgraded per iteration): `upgrade-cluster.sh`
-5. Rolling-update nodes, fix [AZs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html) for [PVs](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) for each [ASG](https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html): `upgrade-nodes.sh`
-6. Validate cluster health and perform some end-to-end tests.
+#### Variable Declarations and Usage
 
-### Overview of EKS upgrade scripts
+3. **Quoting Variables**
+    - All variable assignments must use quotes: `VAR="${value}"`
+    - All variable expansions must use quotes: `"${VAR}"`
+    - Command substitutions must be quoted: `VAR="$(command)"`
+    - Exception: Arithmetic expansion does not require quotes: `$(( EXPR ))` or `(( EXPR ))`
 
-There is a dedicated directory for all the K8S upgrade scripts: `bin/k8s-upgrade/`
+4. **Variable Naming**
+    - Avoid unnecessary prefixes (e.g., `K8S_`, `MONGODB_`, `PG_`)
+    - Use descriptive, clear names without redundant prefixes
 
-The scripts are grouped by a _target_ K8S version, e.g.: `bin/k8s-upgrade/1.27/`
+5. **Readonly Variables**
+    - Declare variables as `readonly` if they are assigned once and never modified
+    - Apply `readonly` to initial argument assignments: `readonly NAMESPACE="${1}"`
+    - Apply `readonly` to constants and configuration values
+    - Default argument values are compatible with `readonly`: `readonly LIMIT="${3:-180}"`
 
-The main script is `upgrade-all.sh`. It is a wrapper around the subscripts, the execution is ordered strictly.
+6. **Local Variables**
+    - Declare variables as `local` within functions to prevent global scope pollution
+    - Prefer combining `local` declaration with assignment: `local COUNT=0`
+    - All function-scoped variables must be declared as `local`
 
-The subscripts are `upgrade-releases.sh`, `upgrade-cluster.sh`, `upgrade-nodes.sh`.
+#### Arithmetic Operations
 
-> Other scripts might be implemented and added to `upgrade-all.sh` to handle any non-trivial upgrade steps.
+7. **Arithmetic Formatting**
+    - Use spaces around operators in arithmetic expressions: `(( COUNT > LIMIT ))`
+    - Use spaces around equality comparisons: `(( COUNT == 0 ))`
+    - Use spaces in arithmetic expansion: `$(( SA_DATE - POD_DATE ))`
+    - Increment operations: `(( ++COUNT ))` (pre-increment with spaces)
+    - Comparison operators: `(( COUNT <= LIMIT ))`, `(( COUNT >= LIMIT ))`
 
-The logic in the scripts is pretty straightforward. Most of the instructions are executed linearly one by one
-and can be considered as some kind of one-time "migrations". 
+#### Arrays
 
-> It is recommended to investigate the scripts logic before applying to a K8S cluster.
+8. **Array Usage**
+    - Iterate arrays using `"${ARRAY[@]}"`: `for ITEM in "${ARRAY[@]}"; do`
+    - Array slicing: `("${ARRAY[@]:start}")` to maintain array structure
+    - Creating arrays from command output: Use `while IFS= read -r` loop with here-document for POSIX compatibility:
+      ```bash
+      ARRAY=()
+      while IFS= read -r ITEM; do
+        if [[ -n "${ITEM}" ]]; then
+          ARRAY+=("${ITEM}")
+        fi
+      done <<EOF
+      ${COMMAND_OUTPUT}
+      EOF
+      ```
+    - Avoid `mapfile` for compatibility with older Bash versions or restricted shell environments
 
-#### Requirements
+#### Tool Preferences
 
-* [RMK](https://github.com/edenlabllc/rmk) >= v0.44.2
-* [AWS CLI](https://aws.amazon.com/cli/) >= 2.9
-* [eksctl](https://eksctl.io/) >= v0.190.0
-* [yq](https://mikefarah.gitbook.io/yq) >= v4.35.2
+9. **YAML/JSON Processing**
+    - Prefer `yq` for most YAML/JSON processing tasks
+    - Exception: Golang templates (`go-template`) are currently used in some ready hooks, but may be migrated to `yq` in
+      the future for unification
+    - Avoid low-level Linux utilities (`sed`, `awk`, `grep`) unless:
+        - The output is plain text (not YAML/JSON)
+        - `yq` cannot handle the specific use case
 
-#### Upgrading EKS from 1.23 to 1.27
+#### Argument Order
 
-The scripts support upgrading K8S from a minimal version of `1.23` to `1.27`.
+9. **Standard Argument Order**
+    - First argument: `NAMESPACE` (required, no default value)
+    - Second argument: `RELEASE_NAME` or `CLUSTER_NAME` (required, no default value)
+    - Subsequent arguments: Other parameters as needed
+    - Last argument: `LIMIT` (if present, must be the final positional argument)
+    - Boolean/enable flags (if present) should come last with default values: `ENABLE_HOOK="${4:-true}"`
 
-> The current upgrade covers 4 minor versions, therefore the logic is complex. For the next versions, 
-> it might have been simplified greatly, when upgrading to the closest version only, e.g. from `1.27` to `1.28`.
+10. **Argument Naming**
+    - Use `RELEASE_NAME` for Helm release names
+    - Use `CLUSTER_NAME` only when referring to a Kubernetes cluster resource (e.g., PostgreSQL cluster)
+    - Use `CLUSTER_NAMESPACE` when the cluster resource exists in a different namespace
 
-> The scripts should be used as a reference point when implementing other upgrade scripts for future versions.
-> They should be idempotent and can be re-executed in case of unexpected errors, e.g. connection timeout/error.
-> In case of small and reduced clusters, the scripts should check whether a corresponding release exists before applying the changes.
+#### Exit Codes
 
-The list of scripts:
-- [upgrade-all.sh](bin/k8s-upgrade/1.27/upgrade-all.sh) - Initialize [RMK](https://github.com/edenlabllc/rmk) configuration, calling rest of scripts one by one (the main upgrade script).
-- [upgrade-releases.sh](bin/k8s-upgrade/1.27/upgrade-releases.sh) - Upgrade all releases. The following subscripts are executed:
-  - [upgrade-kafka-operator.sh](bin/k8s-upgrade/1.27/upgrade-kafka-operator.sh) - Upgrade the [kafka](https://kafka.apache.org/) [operator](https://strimzi.io/).
-  - [upgrade-postgres-operator.sh](bin/k8s-upgrade/1.27/upgrade-postgres-operator.sh) - Upgrade the [postgres](https://www.postgresql.org/) [operator](https://postgres-operator.readthedocs.io/en/latest/).
-  - [upgrade-loki-stack.sh](bin/k8s-upgrade/1.27/upgrade-loki-stack.sh) - Upgrade the [loki stack](https://github.com/grafana/helm-charts/tree/main/charts/loki-stack).
-  - [upgrade-linkerd-planes.sh](bin/k8s-upgrade/1.27/upgrade-linkerd-planes.sh) - Upgrade [Linkerd](https://linkerd.io/) to the latest version (executes the full `release sync` command multiple times).
-    > This is the most complex script, because the Linkerd charts have been reorganized recently and split into multiple ones. 
-    > Therefore, the scripts contain some tricky parts, e.g. forcing pod restarts manually. In general, it is needed for some of the releases which freeze during the upgrade at some point.
-- [upgrade-cluster.sh](bin/k8s-upgrade/1.27/upgrade-cluster.sh) - Upgrade the K8S control plane and system worker node components (1 K8S version per iteration).
-- [upgrade-nodes.sh](bin/k8s-upgrade/1.27/upgrade-nodes.sh) - Rolling-update all the K8S worker nodes.
+12. **Exit Code Standards**
+    - Use `exit 0` for successful completion
+    - Use `exit 1` for errors and failures
+    - Ensure all code paths have explicit exit codes
 
-Before running the scripts you should disable Linkerd in globals **without committing** the changes.
-This changes will be reverted automatically in the middle of execution of `upgrade-releases.sh`.
+#### Error Messages
 
-To list all the globals files that should be changed before the execution:
+13. **Error Message Format**
+    - Include script name in error messages: `$(basename "${0}"): Wait timeout exceeded.`
+    - Use descriptive error messages that explain what failed
+    - Send error messages to stderr: `>&2 echo "ERROR: message"`
 
-```shell
-ls -alh etc/*/<environment>/globals.yaml.gotmpl
-```
+#### Control Flow
 
-Current file content:
+14. **Loop Usage**
+    - Prefer `for` loops for counting iterations: `for (( COUNT=0; COUNT < LIMIT; ++COUNT )); do`
+    - Use `while true` loops for polling/waiting scenarios: `while true; do ... done`
+    - Convert counting `while` loops to `for` loops where appropriate
 
-```yaml
-configs:
-  # ...
-  linkerd:
-    # enable/disable linkerd-await at runtime: true|false
-    await: true
-    # enable/disable linkerd sidecar injection: enabled|disabled
-    inject: enabled
-  # ...
-```
+#### Hook Naming Convention
 
-Expected file content before `upgrade-all.sh` is executed:
+15. **Naming Pattern**
+    - Format: `<event>-<action>.sh` or `<event>-<event>-<action>.sh` for multiple events
+    - Supported events (for the full list,
+      see [Helmfile hooks documentation](https://helmfile.readthedocs.io/en/latest/#hooks)):
+        - `presync`: Execute before Helm sync operation
+        - `postsync`: Execute after Helm sync operation
+        - `preuninstall`: Execute before Helm uninstall operation
+        - `postuninstall`: Execute after Helm uninstall operation
+    - Multiple events: When a hook is used for multiple events, list them explicitly following the order above:
+      `<event1>-<event2>-<action>.sh` (e.g., `preuninstall-postuninstall-delete-cluster.sh`)
+    - Action: Descriptive verb optionally followed by resource or purpose (e.g., `wait-postgres-ready`,
+      `create-postgres-user`, `delete-failed-job`, `restart-airbyte-worker`)
+    - Backward compatibility: If a new event is needed for an existing hook, create a new hook file to maintain backward
+      compatibility
+    - Examples:
+        - `presync-create-postgres-user.sh`
+        - `postsync-wait-postgres-ready.sh`
+        - `preuninstall-postuninstall-delete-cluster.sh`
+        - `postuninstall-wait-persistent-volumes-deleted.sh`
 
-```yaml
-configs:
-  # ...
-  linkerd:
-    # enable/disable linkerd-await at runtime: true|false
-    await: false
-    # enable/disable linkerd sidecar injection: enabled|disabled
-    inject: disabled
-  # ...
-```
+#### Function Definitions
 
-#### Upgrading EKS from 1.27 to 1.29
+16. **Function Best Practices**
+    - Use `function` keyword or `function_name()` syntax consistently
+    - Declare all function variables as `local`
+    - Use descriptive function names that indicate purpose
+    - Return explicit exit codes: `return 0` for success, `return 1` for failure
 
-The scripts support upgrading K8S from a minimal version of `1.27` to `1.29`.
+#### Process Substitution
 
-The list of scripts:
-- [upgrade-all.sh](bin/k8s-upgrade/1.29/upgrade-all.sh) - Initialize [RMK](https://github.com/edenlabllc/rmk) configuration, calling rest of scripts one by one (the main upgrade script).
-- [upgrade-releases.sh](bin/k8s-upgrade/1.29/upgrade-releases.sh) - Upgrade all releases. The following subscripts are executed:
-    - [upgrade-ebs-csi-snapshot-scheduler.sh](bin/k8s-upgrade/1.29/upgrade-ebs-csi-snapshot-scheduler.sh) - Upgrade [EBS CSI snapshot scheduler](https://backube.github.io/snapscheduler/) to the latest version.
-- [upgrade-cluster.sh](bin/k8s-upgrade/1.29/upgrade-cluster.sh) - Upgrade the K8S control plane and system worker node components (1 K8S version per iteration).
-- [upgrade-nodes.sh](bin/k8s-upgrade/1.29/upgrade-nodes.sh) - Rolling-update all the K8S worker nodes.
+17. **Process Substitution Compatibility**
+    - Use here-document with command substitution instead of process substitution (`< <(...)`) for better compatibility:
+      ```bash
+      OUTPUT="$(command)"
+      while IFS= read -r LINE; do
+        # process line
+      done <<EOF
+      ${OUTPUT}
+      EOF
+      ```
+    - This ensures compatibility with restricted shell environments
