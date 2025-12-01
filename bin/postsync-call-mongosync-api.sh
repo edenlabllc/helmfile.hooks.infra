@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
@@ -15,7 +15,7 @@ function check_status() {
     local STATUS="$(cmd curl --max-time 10 --silent http://localhost:27182/api/v1/progress | yq '.success')"
 
     if [[ "${STATUS}" != "true" ]]; then
-      >&2 echo "mongosync not ready or failed"
+      >&2 echo "Mongosync not ready or failed."
       exit 1
     fi
 }
@@ -38,7 +38,7 @@ case "${COMMAND}" in
     cmd curl --max-time 10 --silent http://localhost:27182/api/v1/start -XPOST --data "${START_PAYLOAD}"
     ;;
   *)
-    >&2 echo "incorrect command name ${COMMAND}; available commands: commit, pause, resume, start"
+    >&2 echo "Incorrect command name ${COMMAND}; available commands: commit, pause, resume, start."
     exit 1
     ;;
 esac
