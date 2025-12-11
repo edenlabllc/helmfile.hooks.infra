@@ -110,15 +110,6 @@ releases:
       claimSelector:
         matchLabels:
           app.kubernetes.io/instance: zookeeper
-  zookeeper-search:
-    cluster:
-      name: zookeeper-search
-      replicas: 3
-      resourceType: statefulset
-      namespace: zookeeper
-      claimSelector:
-        matchLabels:
-          app.kubernetes.io/instance: zookeeper-search
   zookeeper-oss:
     cluster:
       name: zookeeper-oss
@@ -137,3 +128,12 @@ releases:
       claimSelector:
         matchLabels:
           release: zookeeper-oss-search
+  zookeeper-search:
+    cluster:
+      name: zookeeper-search
+      replicas: 3
+      resourceType: statefulset
+      namespace: zookeeper
+      claimSelector:
+        matchLabels:
+          app.kubernetes.io/instance: zookeeper-search
