@@ -24,5 +24,5 @@ function check_redisreplication() {
 
 COUNT=1
 while true; do
-  check_redisreplication "$(kubectl --namespace "${NAMESPACE}" get redisreplication "${RELEASE_NAME}" --output yaml | yq ".status.masterNode == \"${RELEASE_NAME}-0\"")"
+  check_redisreplication "$(kubectl --namespace "${NAMESPACE}" get redisreplication "${RELEASE_NAME}" --output yaml | yq ".status.masterNode | test(\"${RELEASE_NAME}\")")"
 done
