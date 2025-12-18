@@ -208,7 +208,7 @@ function get_available_replicas() {
 }
 
 function scale_release_resources() {
-  local RESOURCES=("${1}")
+  local RESOURCES=(${1})
   local COUNT=0
   local RESOURCE
   IFS="${OLD_IFS}"
