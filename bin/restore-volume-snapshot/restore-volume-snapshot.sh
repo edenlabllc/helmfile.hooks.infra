@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+# DEPRECATED: This script is deprecated and will be removed in future releases.
+# It has been replaced by the ebs-snapshot-restore Kubernetes operator which provides
+# a fully automated, declarative approach to EBS snapshot restoration.
+#
+# Migration guide and operator documentation:
+#   https://github.com/edenlabllc/ebs-snapshot-restore.operators.infra
+#
+# Please migrate to the operator as soon as possible.
+
 set -e
 
 ### RESTORE VOLUME SNAPSHOT script ###
