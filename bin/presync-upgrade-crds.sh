@@ -4,5 +4,12 @@ set -e
 
 readonly CHART_FULL_NAME="${1}"
 readonly CHART_VERSION="${2}"
+readonly ADDITIONAL_SELECTORS="${3}"
 
-helm template "${CHART_FULL_NAME}" --version "${CHART_VERSION}" --include-crds | yq 'select(.kind == "CustomResourceDefinition")' | kubectl apply --filename -
+SELECTORS='.kind == "CustomResourceDefinition"'
+
+if [[ -n "${ADDITIONAL_SELECTORS}" ]]; then
+  SELECTORS="${SELECTORS} and ${ADDITIONAL_SELECTORS}"
+fi
+
+helm template "${CHART_FULL_NAME}" --version "${CHART_VERSION}" --include-crds | yq "select(${SELECTORS})" | kubectl apply --filename -
