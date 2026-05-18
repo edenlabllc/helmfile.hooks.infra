@@ -5,6 +5,7 @@ set -e
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
 readonly LIMIT="${3:-180}"
+readonly KEEPER_ENABLED="${4:-false}"
 
 function check_cr() {
   local OUTPUT="${1}"
@@ -25,4 +26,8 @@ function check_cr() {
 COUNT=1
 while true; do
   check_cr "$(kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --output yaml | yq ".status.status == \"Completed\"")"
+
+  if [[ "${KEEPER_ENABLED}" == "true" ]]; then
+    check_cr "$(kubectl --namespace "${NAMESPACE}" get clickhousekeeperinstallation "${RELEASE_NAME}" --output yaml | yq ".status.status == \"Completed\"")"
+  fi
 done
