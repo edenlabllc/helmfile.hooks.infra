@@ -5,29 +5,27 @@ set -e
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
 readonly LIMIT="${3:-180}"
-readonly KEEPER_ENABLED="${4:-false}"
 
-function check_cr() {
-  local OUTPUT="${1}"
+readonly GO_TEMPLATE='
+  {{- range .items }}
+    {{- if not .status }}0{{- end }}
+    {{- if ne .status.status "Completed" }}0{{- end }}
+  {{- end -}}
+'
 
-  if [[ "${OUTPUT}" != "true" && "${COUNT}" -le "${LIMIT}" ]]; then
-    sleep 1
+COUNT=1
+readonly RESOURCES="clickhouseinstallation,clickhousekeeperinstallation"
+while true; do
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get "${RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}" --output "go-template=${GO_TEMPLATE}")"
+  if [[ "${STATUS}" != "" && "${COUNT}" -le "${LIMIT}" ]]; then
+    sleep "${SLEEP}"
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
     echo
-    kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}"
-    exit 0
-  fi
-}
-
-COUNT=1
-while true; do
-  check_cr "$(kubectl --namespace "${NAMESPACE}" get clickhouseinstallation "${RELEASE_NAME}" --output yaml | yq ".status.status == \"Completed\"")"
-
-  if [[ "${KEEPER_ENABLED}" == "true" ]]; then
-    check_cr "$(kubectl --namespace "${NAMESPACE}" get clickhousekeeperinstallation "${RELEASE_NAME}" --output yaml | yq ".status.status == \"Completed\"")"
+    kubectl --namespace "${NAMESPACE}" get "${RESOURCES}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}"
+    break
   fi
 done
