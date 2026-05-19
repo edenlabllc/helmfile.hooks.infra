@@ -12,6 +12,7 @@ readonly GO_TEMPLATE='
     {{- if ne .status.status "Completed" }}0{{- end }}
   {{- end -}}
 '
+readonly SLEEP=1
 
 COUNT=1
 readonly RESOURCES="clickhouseinstallation,clickhousekeeperinstallation"

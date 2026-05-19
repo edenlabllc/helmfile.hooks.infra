@@ -7,6 +7,7 @@ readonly RELEASE_NAME="${2}"
 readonly LIMIT="${3:-180}"
 
 readonly GO_TEMPLATE='{{- range .items }}0{{- end -}}'
+readonly SLEEP=1
 
 COUNT=1
 readonly RESOURCES="clickhouseinstallation,clickhousekeeperinstallation"
