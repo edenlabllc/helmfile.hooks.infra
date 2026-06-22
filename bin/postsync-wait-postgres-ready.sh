@@ -7,6 +7,8 @@ readonly RELEASE_NAME="${2}"
 readonly PATCH_PGHOST_VAR="${3:-false}"
 readonly LIMIT="${4:-600}"
 
+readonly CLUSTER_NAME="${RELEASE_NAME}-cluster"
+
 COUNT=1
 
 function prepare_pgbouncer() {
@@ -50,22 +52,31 @@ function prepare_pgbouncer() {
   fi
 }
 
+# status.PostgresClusterStatus (Zalando postgres-operator 1.15.1)
+#
+# Status          | Meaning
+# ----------------|----------------------------------------------------------
+# Running         | Cluster healthy; operator finished last sync
+# Creating        | New cluster being created
+# Updating        | In progress — rolling update / major upgrade / spec change
+# UpdateFailed    | Update failed — check operator logs
+# SyncFailed      | Reconcile failed — check operator logs
+# CreateFailed    | Initial create failed
+# Invalid         | Invalid spec (e.g. teamId/name mismatch)
+# (empty)         | Unknown / not set yet
 while true; do
   sleep 1
-  STATUS="$(kubectl --namespace "${NAMESPACE}" get postgresql "${RELEASE_NAME}" --output yaml | yq '.status.PostgresClusterStatus')"
-  if [[ "${STATUS}" == "null" ]]; then
-    echo "Resource postgresql cluster ${RELEASE_NAME} not exist."
-    break
-  elif [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
+  STATUS="$(kubectl --namespace "${NAMESPACE}" get postgresql "${CLUSTER_NAME}" --output yaml | yq '.status.PostgresClusterStatus')"
+  if [[ "${STATUS}" != "Running" && "${COUNT}" -le "${LIMIT}" ]]; then
     (( ++COUNT ))
   elif [[ "${COUNT}" -gt "${LIMIT}" ]]; then
     >&2 echo "$(basename "${0}"): Wait timeout exceeded."
     exit 1
   else
-    kubectl --namespace "${NAMESPACE}" get postgresql "${RELEASE_NAME}"
+    kubectl --namespace "${NAMESPACE}" get postgresql "${CLUSTER_NAME}"
     break
   fi
 done
 
-prepare_pgbouncer "${RELEASE_NAME}-pooler" "${RELEASE_NAME}"
-prepare_pgbouncer "${RELEASE_NAME}-pooler-repl" "${RELEASE_NAME}-repl"
+prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
+prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
