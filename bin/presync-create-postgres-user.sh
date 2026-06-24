@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
 
+# presync-create-postgres-user.sh
+#
+# Args:
+#   1  app namespace
+#   2  postgresql CR name
+#   3  postgresql CR namespace
+#   4  username (custom path) or ignored (default path)
+#   5  space-separated database names
+#   6  ENABLE_DEFAULT_USERS (true|false, default false)
+#   7  space-separated extension expressions: database:extension:schema
+#
+# Examples:
+#   # dagster — custom user, two DBs, multiple extensions (arg 7 space-separated)
+#   presync-create-postgres-user.sh dagster postgres-cluster postgres user "dagster warehouse" false "dagster:vector:public warehouse:pgcrypto:public"
+#
+#   # airbyte — custom user, three DBs (arg 5 is one space-separated token)
+#   presync-create-postgres-user.sh airbyte postgres-cluster postgres user "airbyte temporal temporal_visibility"
+#
+#   # keycloak-cluster — custom user, DB name from release (dash → underscore)
+#   presync-create-postgres-user.sh keycloak postgres-cluster postgres cluster-user keycloak_cluster
+
 set -e
 
 readonly NAMESPACE="${1}"
@@ -8,6 +29,7 @@ readonly CLUSTER_NAMESPACE="${3}"
 readonly USERNAME="${4}"
 readonly DATABASES=(${5})
 readonly ENABLE_DEFAULT_USERS="${6:-false}"
+readonly EXTENSIONS=(${7})
 
 function create_default_user() {
   local DB
@@ -45,9 +67,16 @@ function create_custom_user() {
 
     sleep 5
   fi
+
+  local EXTENSION_EXPR EXTENSION_DATABASE EXTENSION_NAME EXTENSION_SCHEMA
+  for EXTENSION_EXPR in "${EXTENSIONS[@]}"; do
+    IFS=':' read -r EXTENSION_DATABASE EXTENSION_NAME EXTENSION_SCHEMA <<< "${EXTENSION_EXPR}"
+    kubectl --namespace "${CLUSTER_NAMESPACE}" patch postgresql "${CLUSTER_NAME}" --type=merge \
+      --patch '{"spec":{"preparedDatabases":{"'"${EXTENSION_DATABASE}"'":{"extensions":{"'"${EXTENSION_NAME}"'":"'"${EXTENSION_SCHEMA}"'"},"schemas":{"public":{"defaultRoles":false,"defaultUsers":false}}}}}}'
+  done
 }
 
-function create_user_postgresql() {
+function create_postgres_user() {
   if [[ "${ENABLE_DEFAULT_USERS}" == "true" ]]; then
     create_default_user
     return 0
@@ -56,9 +85,8 @@ function create_user_postgresql() {
   create_custom_user
 }
 
-if ! (kubectl get namespace "${NAMESPACE}" &> /dev/null); then
+if ! kubectl get namespace "${NAMESPACE}" &>/dev/null; then
   kubectl create namespace "${NAMESPACE}"
-  create_user_postgresql
-else
-  create_user_postgresql
 fi
+
+create_postgres_user
