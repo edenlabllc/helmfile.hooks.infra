@@ -78,5 +78,5 @@ while true; do
   fi
 done
 
-prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
-prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
+#prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
+#prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
