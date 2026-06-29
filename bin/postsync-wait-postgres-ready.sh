@@ -1,5 +1,35 @@
 #!/usr/bin/env bash
 
+# postsync-wait-postgres-ready.sh
+#
+# Args:
+#   1  namespace
+#   2  release name
+#   3  DISABLE_POOLER_METRICS (true|false, default false) — DEPRECATED: remove this arg
+#   4  wait timeout in seconds (default 600)
+#
+# Waits until PostgresClusterStatus == Running, then exits.
+#
+# Why pooler patching in this hook is off by default
+#
+# Declarative config replaces the patch — connectionPooler.inheritPodAnnotations: false
+# stops pooler pods from inheriting Spilo prometheus.io/* annotations, so there is nothing
+# left to strip after sync.
+#
+# Metrics live elsewhere — PgBouncer is scraped via postgres-pgbouncer-exporter, not pooler
+# pod annotations.
+#
+# Operator owns the Deployment — fork v1.15.2 reconciles pooler image, Linkerd annotations,
+# and deploymentStrategy (maxSurge: 0, maxUnavailable: 1) from the CR. Imperative kubectl
+# patch/scale fights that loop and can cause extra rollouts or Pending pods on small clusters.
+#
+# Arg 3 is never passed — DISABLE_POOLER_METRICS defaults to false for all three clusters
+# (postgres, elt-postgres, fhir-postgres), so the patch block in the hook never runs anyway.
+#
+# Bottom line: the old hook was a workaround for inherited scrape annotations; that is fixed
+# in values/operator now, so this script only waits for PostgresClusterStatus == Running.
+# DEPRECATED: arg 3 and disable_pooler_metrics() should be removed once no callers pass true.
+
 set -e
 
 readonly NAMESPACE="${1}"
@@ -11,6 +41,7 @@ readonly CLUSTER_NAME="${RELEASE_NAME}-cluster"
 
 COUNT=1
 
+# DEPRECATED: remove disable_pooler_metrics() once arg 3 is dropped.
 function disable_pooler_metrics() {
   local POOLER_NAME="${1}"
   local SVC_NAME="${2}"
@@ -76,6 +107,7 @@ while true; do
   fi
 done
 
+# DEPRECATED: remove this block together with arg 3 and disable_pooler_metrics().
 if [[ "${DISABLE_POOLER_METRICS}" == "true" ]]; then
   disable_pooler_metrics "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
   disable_pooler_metrics "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
