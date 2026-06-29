@@ -10,8 +10,6 @@
 #
 # Waits until PostgresClusterStatus == Running, then exits.
 #
-# Why pooler patching in this hook is off by default
-#
 # Declarative config replaces the patch — connectionPooler.inheritPodAnnotations: false
 # stops pooler pods from inheriting Spilo prometheus.io/* annotations, so there is nothing
 # left to strip after sync.
@@ -25,15 +23,12 @@
 #
 # Arg 3 is never passed — DISABLE_POOLER_METRICS defaults to false for all three clusters
 # (postgres, elt-postgres, fhir-postgres), so the patch block in the hook never runs anyway.
-#
-# Bottom line: the old hook was a workaround for inherited scrape annotations; that is fixed
-# in values/operator now, so this script only waits for PostgresClusterStatus == Running.
-# DEPRECATED: arg 3 and disable_pooler_metrics() should be removed once no callers pass true.
 
 set -e
 
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
+# DEPRECATED: arg 3 and disable_pooler_metrics() should be removed once no callers pass true.
 readonly DISABLE_POOLER_METRICS="${3:-false}"
 readonly LIMIT="${4:-600}"
 
