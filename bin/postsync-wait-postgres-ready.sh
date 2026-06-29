@@ -1,17 +1,43 @@
 #!/usr/bin/env bash
 
+# postsync-wait-postgres-ready.sh
+#
+# Args:
+#   1  namespace
+#   2  release name
+#   3  DISABLE_POOLER_METRICS (true|false, default false) — DEPRECATED: remove this arg
+#   4  wait timeout in seconds (default 600)
+#
+# Waits until PostgresClusterStatus == Running, then exits.
+#
+# Declarative config replaces the patch — connectionPooler.inheritPodAnnotations: false
+# stops pooler pods from inheriting Spilo prometheus.io/* annotations, so there is nothing
+# left to strip after sync.
+#
+# Metrics live elsewhere — PgBouncer is scraped via postgres-pgbouncer-exporter, not pooler
+# pod annotations.
+#
+# Operator owns the Deployment — fork v1.15.2 reconciles pooler image, Linkerd annotations,
+# and deploymentStrategy (maxSurge: 0, maxUnavailable: 1) from the CR. Imperative kubectl
+# patch/scale fights that loop and can cause extra rollouts or Pending pods on small clusters.
+#
+# Arg 3 is never passed — DISABLE_POOLER_METRICS defaults to false for all three clusters
+# (postgres, elt-postgres, fhir-postgres), so the patch block in the hook never runs anyway.
+
 set -e
 
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
-readonly PATCH_PGHOST_VAR="${3:-false}"
+# DEPRECATED: arg 3 and disable_pooler_metrics() should be removed once no callers pass true.
+readonly DISABLE_POOLER_METRICS="${3:-false}"
 readonly LIMIT="${4:-600}"
 
 readonly CLUSTER_NAME="${RELEASE_NAME}-cluster"
 
 COUNT=1
 
-function prepare_pgbouncer() {
+# DEPRECATED: remove disable_pooler_metrics() once arg 3 is dropped.
+function disable_pooler_metrics() {
   local POOLER_NAME="${1}"
   local SVC_NAME="${2}"
 
@@ -36,12 +62,10 @@ function prepare_pgbouncer() {
       -p '{"spec": {"template": {"metadata": {"annotations": {"prometheus.io/scrape": "false"}}}}}'
     kubectl --namespace "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
 
-    if [[ "${PATCH_PGHOST_VAR}" == "true" ]]; then
-      echo "Patching ${POOLER_NAME} PGHOST env..."
-      kubectl --namespace "${NAMESPACE}" patch deployment "${POOLER_NAME}" --type='strategic' \
-        -p '{"spec":{"template":{"spec":{"containers":[{"name":"connection-pooler","env":[{"name":"PGHOST","value":"'${SVC_NAME}'.'${NAMESPACE}'.svc.cluster.local"}]}]}}}}'
-      kubectl --namespace "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
-    fi
+    echo "Patching ${POOLER_NAME} PGHOST env..."
+    kubectl --namespace "${NAMESPACE}" patch deployment "${POOLER_NAME}" --type='strategic' \
+      -p '{"spec":{"template":{"spec":{"containers":[{"name":"connection-pooler","env":[{"name":"PGHOST","value":"'${SVC_NAME}'.'${NAMESPACE}'.svc.cluster.local"}]}]}}}}'
+    kubectl --namespace "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
 
     echo "Scaling ${POOLER_NAME} replicas back to ${POOLER_CURRENT_REPLICAS}..."
     kubectl --namespace "${NAMESPACE}" scale deployment "${POOLER_NAME}" --replicas="${POOLER_CURRENT_REPLICAS}"
@@ -78,5 +102,8 @@ while true; do
   fi
 done
 
-prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
-prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
+# DEPRECATED: remove this block together with arg 3 and disable_pooler_metrics().
+if [[ "${DISABLE_POOLER_METRICS}" == "true" ]]; then
+  disable_pooler_metrics "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
+  disable_pooler_metrics "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
+fi
