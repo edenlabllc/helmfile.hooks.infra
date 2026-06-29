@@ -4,14 +4,14 @@ set -e
 
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
-readonly PATCH_PGHOST_VAR="${3:-false}"
+readonly DISABLE_POOLER_METRICS="${3:-false}"
 readonly LIMIT="${4:-600}"
 
 readonly CLUSTER_NAME="${RELEASE_NAME}-cluster"
 
 COUNT=1
 
-function prepare_pgbouncer() {
+function disable_pooler_metrics() {
   local POOLER_NAME="${1}"
   local SVC_NAME="${2}"
 
@@ -36,12 +36,10 @@ function prepare_pgbouncer() {
       -p '{"spec": {"template": {"metadata": {"annotations": {"prometheus.io/scrape": "false"}}}}}'
     kubectl --namespace "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
 
-    if [[ "${PATCH_PGHOST_VAR}" == "true" ]]; then
-      echo "Patching ${POOLER_NAME} PGHOST env..."
-      kubectl --namespace "${NAMESPACE}" patch deployment "${POOLER_NAME}" --type='strategic' \
-        -p '{"spec":{"template":{"spec":{"containers":[{"name":"connection-pooler","env":[{"name":"PGHOST","value":"'${SVC_NAME}'.'${NAMESPACE}'.svc.cluster.local"}]}]}}}}'
-      kubectl --namespace "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
-    fi
+    echo "Patching ${POOLER_NAME} PGHOST env..."
+    kubectl --namespace "${NAMESPACE}" patch deployment "${POOLER_NAME}" --type='strategic' \
+      -p '{"spec":{"template":{"spec":{"containers":[{"name":"connection-pooler","env":[{"name":"PGHOST","value":"'${SVC_NAME}'.'${NAMESPACE}'.svc.cluster.local"}]}]}}}}'
+    kubectl --namespace "${NAMESPACE}" rollout status deployment "${POOLER_NAME}"
 
     echo "Scaling ${POOLER_NAME} replicas back to ${POOLER_CURRENT_REPLICAS}..."
     kubectl --namespace "${NAMESPACE}" scale deployment "${POOLER_NAME}" --replicas="${POOLER_CURRENT_REPLICAS}"
@@ -78,5 +76,7 @@ while true; do
   fi
 done
 
-prepare_pgbouncer "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
-prepare_pgbouncer "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
+if [[ "${DISABLE_POOLER_METRICS}" == "true" ]]; then
+  disable_pooler_metrics "${CLUSTER_NAME}-pooler" "${CLUSTER_NAME}"
+  disable_pooler_metrics "${CLUSTER_NAME}-pooler-repl" "${CLUSTER_NAME}-repl"
+fi
