@@ -5,7 +5,7 @@ set -e
 readonly NAMESPACE="${1}"
 readonly RELEASE_NAME="${2}"
 readonly LIMIT="${3:-300}"
-readonly SLEEP_INTERVAL=1
+readonly SLEEP_INTERVAL=15
 
 readonly CR_TYPES=(
   "keycloakrealms"
@@ -59,7 +59,6 @@ wait_for_cr_type() {
 }
 
 echo "Starting Keycloak CR status check in namespace: ${NAMESPACE}"
-echo "Timeout per: ${LIMIT} seconds"
 
 for cr in "${CR_TYPES[@]}"; do
   wait_for_cr_type "${cr}.config.idp.edenlab.io"
