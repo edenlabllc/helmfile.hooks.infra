@@ -40,7 +40,7 @@ wait_for_cr_type() {
     echo "Progress (${cr_type}): ${ready_count}/${total} ready"
 
     if [[ "${ready_count}" -eq "${total}" ]]; then
-      echo "Success! All ${cr_type} resources are in 'Completed' status."
+      echo "All ${cr_type} resources are in 'Completed' status."
       return 0
     fi
 
@@ -64,4 +64,4 @@ for cr in "${CR_TYPES[@]}"; do
   wait_for_cr_type "${cr}.config.idp.edenlab.io"
 done
 
-echo "SUCCESS: Keycloak CR status check completed successfully!"
+echo "Keycloak CR status check completed successfully!"
