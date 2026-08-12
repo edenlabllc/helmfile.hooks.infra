@@ -59,16 +59,12 @@ wait_for_cr_type() {
   done
 }
 
-main() {
-  echo "Starting Keycloak CR status check in namespace: ${NAMESPACE}"
-  echo "Timeout per stage: ${LIMIT} seconds"
-  echo "--------------------------------------------------------"
+echo "Starting Keycloak CR status check in namespace: ${NAMESPACE}"
+echo "Timeout per stage: ${LIMIT} seconds"
+echo "--------------------------------------------------------"
 
-  for cr in "${CR_STAGES[@]}"; do
-    wait_for_cr_type "${cr}"
-  done
+for cr in "${CR_STAGES[@]}"; do
+  wait_for_cr_type "${cr}"
+done
 
-  echo "SUCCESS: Keycloak CR status check completed successfully!"
-}
-
-main
+echo "SUCCESS: Keycloak CR status check completed successfully!"
