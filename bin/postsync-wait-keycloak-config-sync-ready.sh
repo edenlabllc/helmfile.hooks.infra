@@ -3,7 +3,8 @@
 set -e
 
 readonly NAMESPACE="${1:?Error: Please specify the namespace as the first argument. Example: $0 my-namespace}"
-readonly LIMIT="${2:-300}"
+readonly RELEASE_NAME="${2}"
+readonly LIMIT="${3:-300}"
 readonly SLEEP_INTERVAL=15
 
 readonly CR_STAGES=(
@@ -23,7 +24,7 @@ wait_for_cr_type() {
 
   while true; do
     local json
-    json=$(kubectl --namespace "${NAMESPACE}" get "${cr_type}" -o json 2>/dev/null || echo '{"items":[]}')
+    json=$(kubectl --namespace "${NAMESPACE}" get "${cr_type}" --selector "app.kubernetes.io/instance=${RELEASE_NAME}" -o json 2>/dev/null || echo '{"items":[]}')
 
     local total
     total=$(echo "${json}" | yq '.items | length')
